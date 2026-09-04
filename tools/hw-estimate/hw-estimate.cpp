@@ -8,7 +8,7 @@
 
 /*
  * TODO:
- * -Make cout output nicer, full output to another file
+ * -Add an array size threshold to differentiate if a firreg should count for FF or Sram
  * -FO4 Analysis also
  */
 
@@ -43,7 +43,7 @@ static llvm::cl::opt<std::string> inputFileName(
 );
 
 static llvm::cl::opt<std::string> inputCostModelJSON(
-    llvm::cl::Positional, llvm::cl::desc("<path to cost_model.json>"),
+    "cost-model-file", llvm::cl::desc("<path to cost_model.json>"),
     llvm::cl::init("tools/hw-estimate/cost-model.json")
     );
 
@@ -54,7 +54,7 @@ static llvm::cl::opt<std::string> outputFileName(
 
 static llvm::cl::opt<std::string> outputErrorFileName(
     "error-file", llvm::cl::desc("Output Error filename"),
-    llvm::cl::init("tools/hw-estimate/test/outputErrors.txt")
+    llvm::cl::init("-")
     );
 
 static llvm::cl::opt<bool> verbose(
@@ -71,7 +71,7 @@ namespace
   };
 } // End of anonymous namespace
 
-static llvm::StringMap<GECost> loadCostModel(llvm::StringRef path, double &ffGEPerBit)
+static llvm::StringMap<GECost> loadCostModel(llvm::StringRef path, double &ffGEPerBit, double &sramGEPerBit, double &sramFixedGE)
 {
   // Map from string to GECost struct of each operation (ex. "comb.add" : [1.5, 0], "comb.or" : ...)
   llvm::StringMap<GECost>model;
@@ -118,6 +118,16 @@ static llvm::StringMap<GECost> loadCostModel(llvm::StringRef path, double &ffGEP
     ffGEPerBit = *v;
   else
     llvm::errs() << "Warning: cost model is missing 'ff_ge_per_bit', defaulting to 0\n";
+
+  // load cost for SRAM bits
+  if(auto v = root->getNumber("sram_ge_per_bit"))
+    sramGEPerBit = *v;
+  else
+    llvm::errs() << "Warning cost mosdel is missing 'sram_ge_per_bit', defraulting to 0\n";
+
+  if(auto v = root->getNumber("sram_fixed_ge"))
+    sramFixedGE = *v;
+
   return model;
 }
 
@@ -133,7 +143,7 @@ static uint64_t getTotalBits(Type type)
 
 int main(int argc, char** argv)
 {
-  llvm::InitLLVM y(argc, argv); // taking the LLVM output from the command line
+  llvm::InitLLVM y(argc, argv);
   llvm::cl::ParseCommandLineOptions(argc, argv, "hw-estimate\n");
 
   DialectRegistry registry;
@@ -166,10 +176,14 @@ int main(int argc, char** argv)
   }
 
 
-  double ffGEPerBit = 0.0;
-  llvm::StringMap<GECost> costModel = loadCostModel(inputCostModelJSON, ffGEPerBit);
+  double ffGEPerBit{}, sramGEPerBit{}, sramFixedGE{};
+
+  llvm::StringMap<GECost> costModel = loadCostModel(inputCostModelJSON, ffGEPerBit, sramGEPerBit, sramFixedGE);
+
   double totalLogicGE{};
-  long long totalFFBits{};
+
+  // macros is how many arrays classify as SRAM
+  long long totalFFBits{}, totalSramBits{}, totalSramMacros{};
 
   module->walk([&](Operation *op)
   {
@@ -181,11 +195,22 @@ int main(int argc, char** argv)
       if(bits == 0)
         errorFile.os() << "Warning: seq.firreg with unrecognized type. 0 FF bits counted\n";
 
-      llvm::StringRef regName = firreg.getName();
-      if(verbose)
-        outputFile.os() << "FF: " << regName << " (" << bits << " bits)\n";
+      if(isa<circt::hw::ArrayType>(firreg.getType()))
+      {
+        totalSramBits += bits;
+        totalSramMacros++;
 
-      totalFFBits += bits;
+        if(verbose)
+          outputFile.os() << "SRAM: " << firreg.getName() << " (" << bits << " bits)\n";
+      }
+
+      else
+      {
+        totalFFBits += bits;
+
+        if(verbose)
+          outputFile.os() << "FF: " << firreg.getName() << " (" << bits << " bits)\n";
+      }
       return;
     }
 
@@ -206,13 +231,16 @@ int main(int argc, char** argv)
     double ge = it->second.gePerBit * width + it->second.fixedGE;
     totalLogicGE += ge;
     if(verbose)
-      outputFile.os() << opName << " (width " << width << "): " << ge << " GE\n";
+      outputFile.os() << opName << " (width " << width << "): " << llvm::format("%.2f", ge) << " GE\n";
   });
 
   double totalFFGE = totalFFBits * ffGEPerBit;
+  double totalSramGE = totalSramBits * sramGEPerBit + totalSramMacros * sramFixedGE;
+
   outputFile.os() << "--------\n"
                   << "Logic GE: " << llvm::format("%.2f", totalLogicGE)<< "\n"
                   << "FF GE:    " << llvm::format("%.2f", totalFFGE) << " (" << totalFFBits << " bits)\n"
+                  << "SRAM GE:  " << llvm::format("%.2f", totalSramGE) << " (" << totalSramBits << " bits)\n"
                   << "Total GE: " << llvm:: format("%.2f", totalLogicGE + totalFFGE) << "\n";
 
   outputFile.keep();
