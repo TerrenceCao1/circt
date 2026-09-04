@@ -2,25 +2,34 @@
  * @file hw-estimate.cpp
  * @author Terrence Cao
  * @brief Lightweight tool to estimate the GE and FO4 of a potential hardware design
- * @details current usage: build/bin/circt-verilog <verilog file> | build/bin/hw-estimate -
+ * @details current usage: build/bin/hw-estimate <mlir-file-name>.mlir
  *
  */
 
-#include "circt/Dialect/HW/HWDialect.h"
-#include "circt/Dialect/Comb/CombDialect.h"
-#include "circt/Dialect/HW/HWOps.h"
-#include "circt/Dialect/Seq/SeqDialect.h"
+/*
+ * TODO:
+ * -Make cout output nicer, full output to another file
+ * -FO4 Analysis also
+ */
+
+#include "circt/Dialect/HW/HWTypes.h"
+#include "circt/Dialect/Seq/SeqOps.h"
+#include "mlir/InitAllDialects.h"
 #include "mlir/IR/DialectRegistry.h"
 #include "mlir/IR/MLIRContext.h"
 #include "mlir/IR/BuiltinOps.h"
 #include "mlir/IR/OwningOpRef.h"
 #include "mlir/Parser/Parser.h"
+#include "circt/InitAllDialects.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/InitLLVM.h"
 #include "llvm/Support/JSON.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/ToolOutputFile.h"
+#include <iomanip>
 
 using namespace mlir;
 
@@ -36,16 +45,22 @@ static llvm::cl::opt<std::string> inputCostModelJSON(
     llvm::cl::init("tools/hw-estimate/cost-model.json")
     );
 
+// Output file name
+static llvm::cl::opt<std::string> outputFileName(
+    "o", llvm::cl::desc("Output filename"),
+    llvm::cl::value_desc("filename"), llvm::cl::init("-")
+    );
+
 namespace
 {
   struct GECost
   {
-    double gePerBit = 0.0;
-    double fixedGE = 0.0;
+    double gePerBit{};
+    double fixedGE{};
   };
 } // End of anonymous namespace
 
-static llvm::StringMap<GECost> loadCostModel(llvm::StringRef path)
+static llvm::StringMap<GECost> loadCostModel(llvm::StringRef path, double &ffGEPerBit)
 {
   // Map from string to GECost struct of each operation (ex. "comb.add" : [1.5, 0], "comb.or" : ...)
   llvm::StringMap<GECost>model;
@@ -87,9 +102,23 @@ static llvm::StringMap<GECost> loadCostModel(llvm::StringRef path)
     model[kv.first] = cost;
   }
 
+  // load cost for flip flops
+  if(auto v = root->getNumber("ff_ge_per_bit"))
+    ffGEPerBit = *v;
+  else
+    llvm::errs() << "Warning: cost model is missing 'ff_ge_per_bit', defaulting to 0\n";
   return model;
 }
 
+// Recursive helper for getting the total number of flip flop bits
+static uint64_t getTotalBits(Type type)
+{
+  if(auto intTy = dyn_cast<IntegerType>(type))
+    return intTy.getWidth();
+  if(auto arrTy = dyn_cast<circt::hw::ArrayType>(type))
+    return arrTy.getNumElements() * getTotalBits(arrTy.getElementType());
+  return 0;
+}
 
 int main(int argc, char** argv)
 {
@@ -97,11 +126,20 @@ int main(int argc, char** argv)
   llvm::cl::ParseCommandLineOptions(argc, argv, "hw-estimate\n");
 
   DialectRegistry registry;
-  registry.insert<circt::hw::HWDialect, circt::comb::CombDialect, circt::seq::SeqDialect>();
+  mlir::registerAllDialects(registry);
+  circt::registerAllDialects(registry);
 
   MLIRContext context(registry);
 
   OwningOpRef<ModuleOp> module = parseSourceFile<ModuleOp>(inputFileName, &context);
+
+  std::error_code EC;
+  llvm::ToolOutputFile outputFile(outputFileName, EC, llvm::sys::fs::OF_None);
+  if(EC)
+  {
+    llvm::errs() << "Error: couldn't open output file: " << EC.message() << "\n";
+    return 1;
+  }
 
   if(!module)
   {
@@ -109,12 +147,24 @@ int main(int argc, char** argv)
     return 1;
   }
 
-  llvm::StringMap<GECost> costModel = loadCostModel(inputCostModelJSON);
-  double totalGE = 0.0;
+  double ffGEPerBit = 0.0;
+  llvm::StringMap<GECost> costModel = loadCostModel(inputCostModelJSON, ffGEPerBit);
+  double totalLogicGE{};
+  long long totalFFBits{};
 
   module->walk([&](Operation *op)
   {
     llvm::StringRef opName = op->getName().getStringRef();
+
+    if(auto firreg = dyn_cast<circt::seq::FirRegOp>(op))
+    {
+      uint64_t bits = getTotalBits(firreg.getType());
+      if(bits == 0)
+        llvm::errs() << "Warning: seq.firreg with unrecognized type. 0 FF bits counted\n";
+
+      totalFFBits += bits;
+      return;
+    }
 
     auto it = costModel.find(opName);
     if(it == costModel.end())
@@ -123,7 +173,7 @@ int main(int argc, char** argv)
       return;
     }
 
-    unsigned width = 0;
+    unsigned width{};
     if(op->getNumResults() > 0)
     {
       if(auto intTy = dyn_cast<IntegerType>(op->getResult(0).getType()))
@@ -131,13 +181,16 @@ int main(int argc, char** argv)
     }
 
     double ge = it->second.gePerBit * width + it->second.fixedGE;
-    totalGE += ge;
+    totalLogicGE += ge;
 
-    llvm::outs() << opName << " (width " << width << "): " << ge << " GE\n";
+    outputFile.os() << opName << " (width " << width << "): " << ge << " GE\n";
   });
 
-  llvm::outs() << "--------\n" <<
-                  "Total logic GE: " << totalGE << "\n";
+  double totalFFGE = totalFFBits * ffGEPerBit;
+  outputFile.os() << "--------\n"
+                  << "Logic GE: " << llvm::format("%.2f", totalLogicGE)<< "\n"
+                  << "FF GE:    " << llvm::format("%.2f", totalFFGE) << " (" << totalFFBits << " bits)\n"
+                  << "Total GE: " << llvm:: format("%.2f", totalLogicGE + totalFFGE) << "\n";
 
   return 0;
 }
