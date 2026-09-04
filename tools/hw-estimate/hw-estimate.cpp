@@ -20,6 +20,7 @@
 #include "mlir/IR/BuiltinOps.h"
 #include "mlir/IR/OwningOpRef.h"
 #include "mlir/Parser/Parser.h"
+#include "mlir/Pass/PassManager.h"
 #include "circt/InitAllDialects.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
@@ -33,22 +34,32 @@
 
 using namespace mlir;
 
-// Getting input file from command line
+// --------------------------------------------------------------------------
+// Tool options
+// --------------------------------------------------------------------------
 static llvm::cl::opt<std::string> inputFileName(
     llvm::cl::Positional, llvm::cl::desc("<input .mlir file>"),
     llvm::cl::init("-")
 );
 
-// Getting the cost model JSON from the command line
 static llvm::cl::opt<std::string> inputCostModelJSON(
     llvm::cl::Positional, llvm::cl::desc("<path to cost_model.json>"),
     llvm::cl::init("tools/hw-estimate/cost-model.json")
     );
 
-// Output file name
 static llvm::cl::opt<std::string> outputFileName(
     "o", llvm::cl::desc("Output filename"),
     llvm::cl::value_desc("filename"), llvm::cl::init("-")
+    );
+
+static llvm::cl::opt<std::string> outputErrorFileName(
+    "error-file", llvm::cl::desc("Output Error filename"),
+    llvm::cl::init("tools/hw-estimate/test/outputErrors.txt")
+    );
+
+static llvm::cl::opt<bool> verbose(
+    "v", llvm::cl::desc("Verbosely describing each and every thing that contributes to GE"),
+    llvm::cl::init(false)
     );
 
 namespace
@@ -133,19 +144,27 @@ int main(int argc, char** argv)
 
   OwningOpRef<ModuleOp> module = parseSourceFile<ModuleOp>(inputFileName, &context);
 
-  std::error_code EC;
-  llvm::ToolOutputFile outputFile(outputFileName, EC, llvm::sys::fs::OF_None);
-  if(EC)
+  // Output Files
+  std::error_code ECOutput, ECError;
+  llvm::ToolOutputFile outputFile(outputFileName, ECOutput, llvm::sys::fs::OF_None);
+  if(ECOutput)
   {
-    llvm::errs() << "Error: couldn't open output file: " << EC.message() << "\n";
+    llvm::errs() << "Error: couldn't open output file: " << ECOutput.message() << "\n";
     return 1;
+  }
+
+  llvm::ToolOutputFile errorFile(outputErrorFileName, ECError, llvm::sys::fs::OF_None);
+  if(ECError)
+  {
+    llvm::errs() << "Error: couldn't open error file: " << ECError.message() << "\n";
   }
 
   if(!module)
   {
-    llvm::errs() << "Failed to parse the input\n";
+    errorFile.os() << "Failed to parse the input\n";
     return 1;
   }
+
 
   double ffGEPerBit = 0.0;
   llvm::StringMap<GECost> costModel = loadCostModel(inputCostModelJSON, ffGEPerBit);
@@ -160,7 +179,11 @@ int main(int argc, char** argv)
     {
       uint64_t bits = getTotalBits(firreg.getType());
       if(bits == 0)
-        llvm::errs() << "Warning: seq.firreg with unrecognized type. 0 FF bits counted\n";
+        errorFile.os() << "Warning: seq.firreg with unrecognized type. 0 FF bits counted\n";
+
+      llvm::StringRef regName = firreg.getName();
+      if(verbose)
+        outputFile.os() << "FF: " << regName << " (" << bits << " bits)\n";
 
       totalFFBits += bits;
       return;
@@ -169,7 +192,7 @@ int main(int argc, char** argv)
     auto it = costModel.find(opName);
     if(it == costModel.end())
     {
-      llvm::errs() << "Warning: No cost entry for '" << opName << "', skipping\n";
+      errorFile.os() << "Warning: No cost entry for '" << opName << "', skipping\n";
       return;
     }
 
@@ -182,8 +205,8 @@ int main(int argc, char** argv)
 
     double ge = it->second.gePerBit * width + it->second.fixedGE;
     totalLogicGE += ge;
-
-    outputFile.os() << opName << " (width " << width << "): " << ge << " GE\n";
+    if(verbose)
+      outputFile.os() << opName << " (width " << width << "): " << ge << " GE\n";
   });
 
   double totalFFGE = totalFFBits * ffGEPerBit;
@@ -192,5 +215,7 @@ int main(int argc, char** argv)
                   << "FF GE:    " << llvm::format("%.2f", totalFFGE) << " (" << totalFFBits << " bits)\n"
                   << "Total GE: " << llvm:: format("%.2f", totalLogicGE + totalFFGE) << "\n";
 
+  outputFile.keep();
+  errorFile.keep();
   return 0;
 }
