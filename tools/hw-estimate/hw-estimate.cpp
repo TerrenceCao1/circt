@@ -14,6 +14,7 @@
 
 #include "circt/Dialect/HW/HWTypes.h"
 #include "circt/Dialect/Seq/SeqOps.h"
+#include "circt/Dialect/Seq/SeqTypes.h"
 #include "mlir/InitAllDialects.h"
 #include "mlir/IR/DialectRegistry.h"
 #include "mlir/IR/MLIRContext.h"
@@ -24,13 +25,13 @@
 #include "circt/InitAllDialects.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Support/Casting.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/InitLLVM.h"
 #include "llvm/Support/JSON.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/ToolOutputFile.h"
-#include <iomanip>
 
 using namespace mlir;
 
@@ -136,8 +137,10 @@ static uint64_t getTotalBits(Type type)
 {
   if(auto intTy = dyn_cast<IntegerType>(type))
     return intTy.getWidth();
+
   if(auto arrTy = dyn_cast<circt::hw::ArrayType>(type))
     return arrTy.getNumElements() * getTotalBits(arrTy.getElementType());
+
   return 0;
 }
 
@@ -189,28 +192,44 @@ int main(int argc, char** argv)
   {
     llvm::StringRef opName = op->getName().getStringRef();
 
+    // Flip Flops
     if(auto firreg = dyn_cast<circt::seq::FirRegOp>(op))
     {
       uint64_t bits = getTotalBits(firreg.getType());
       if(bits == 0)
+      {
         errorFile.os() << "Warning: seq.firreg with unrecognized type. 0 FF bits counted\n";
-
-      if(isa<circt::hw::ArrayType>(firreg.getType()))
-      {
-        totalSramBits += bits;
-        totalSramMacros++;
-
-        if(verbose)
-          outputFile.os() << "SRAM: " << firreg.getName() << " (" << bits << " bits)\n";
+        return;
       }
 
-      else
-      {
-        totalFFBits += bits;
+      totalFFBits += bits;
 
-        if(verbose)
-          outputFile.os() << "FF: " << firreg.getName() << " (" << bits << " bits)\n";
+      if(verbose)
+        outputFile.os() << "FF: " << firreg.getName() << " (" << bits << " bits)\n";
+
+      return;
+    }
+
+    // SRAM
+    if(auto firmem = dyn_cast<circt::seq::FirMemOp>(op))
+    {
+      auto memType = dyn_cast<circt::seq::FirMemType>(firmem.getType());
+      if(!memType)
+      {
+        errorFile.os() << "Warning: seq.firmem with unrecognized type, 0 SRAM bits counted\n";
+        return;
       }
+
+      uint64_t depth = memType.getDepth();
+      uint64_t width = memType.getWidth();
+      uint64_t bits  = depth * width;
+
+      totalSramBits += bits;
+      totalSramMacros++;
+
+      if(verbose)
+        outputFile.os() << "SRAM: " << firmem.getName() << " (" << depth << " x " << width << " = " << bits << " bits)\n";
+
       return;
     }
 
@@ -224,7 +243,7 @@ int main(int argc, char** argv)
     unsigned width{};
     if(op->getNumResults() > 0)
     {
-      if(auto intTy = dyn_cast<IntegerType>(op->getResult(0).getType()))
+     if(auto intTy = dyn_cast<IntegerType>(op->getResult(0).getType()))
         width = intTy.getWidth();
     }
 
@@ -240,8 +259,8 @@ int main(int argc, char** argv)
   outputFile.os() << "--------\n"
                   << "Logic GE: " << llvm::format("%.2f", totalLogicGE)<< "\n"
                   << "FF GE:    " << llvm::format("%.2f", totalFFGE) << " (" << totalFFBits << " bits)\n"
-                  << "SRAM GE:  " << llvm::format("%.2f", totalSramGE) << " (" << totalSramBits << " bits)\n"
-                  << "Total GE: " << llvm:: format("%.2f", totalLogicGE + totalFFGE) << "\n";
+                  << "SRAM GE:  " << llvm::format("%.2f", totalSramGE) << " (" << totalSramBits << " bits in " << totalSramMacros << " macro(s))\n"
+                  << "Total GE: " << llvm:: format("%.2f", totalLogicGE + totalFFGE + totalSramGE) << "\n";
 
   outputFile.keep();
   errorFile.keep();
