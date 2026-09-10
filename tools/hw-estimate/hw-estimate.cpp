@@ -8,8 +8,7 @@
 
 /*
  * TODO:
- * -Add an array size threshold to differentiate if a firreg should count for FF or Sram
- * -FO4 Analysis also
+ * -FO4 Analysis
  */
 
 #include "circt/Dialect/HW/HWTypes.h"
@@ -63,12 +62,31 @@ static llvm::cl::opt<bool> verbose(
     llvm::cl::init(false)
     );
 
+static llvm::cl::opt<bool> runGE(
+    "ge", llvm::cl::desc("Perform Gate Equivalency Analysis"),
+    llvm::cl::init(true)
+    );
+
+static llvm::cl::opt<bool> runFO4(
+    "fo4", llvm::cl::desc("Run fanout-of-4 (critical path) analysis"),
+    llvm::cl::init(false)
+    );
+
 namespace
 {
   struct GECost
   {
     double gePerBit{};
     double fixedGE{};
+  };
+
+  struct CostModel
+  {
+    llvm::StringMap<GECost> logicGE;
+    llvm::StringMap<double> delayFO4;
+    double ffGEPerBit{};
+    double sramGEPerBit{};
+    double sramFixedGE{};
   };
 } // End of anonymous namespace
 
