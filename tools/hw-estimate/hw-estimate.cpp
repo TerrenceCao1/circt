@@ -31,6 +31,7 @@
 #include "llvm/Support/JSON.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/ToolOutputFile.h"
+#include "llvm/Support/raw_ostream.h"
 
 using namespace mlir;
 
@@ -64,7 +65,7 @@ static llvm::cl::opt<bool> verbose(
 
 static llvm::cl::opt<bool> runGE(
     "ge", llvm::cl::desc("Perform Gate Equivalency Analysis"),
-    llvm::cl::init(true)
+    llvm::cl::init(false)
     );
 
 static llvm::cl::opt<bool> runFO4(
@@ -83,17 +84,27 @@ namespace
   struct CostModel
   {
     llvm::StringMap<GECost> logicGE;
-    llvm::StringMap<double> delayFO4;
+    llvm::StringMap<double>  delayFO4;
     double ffGEPerBit{};
     double sramGEPerBit{};
     double sramFixedGE{};
   };
+
+  struct GEResult
+  {
+    double totalLogicGE{};
+    double totalFFGE{};
+    double totalSramGE{};
+    long long totalFFBits{};
+    long long totalSramBits{};
+    long long totalSramMacros{};
+  };
 } // End of anonymous namespace
 
-static llvm::StringMap<GECost> loadCostModel(llvm::StringRef path, double &ffGEPerBit, double &sramGEPerBit, double &sramFixedGE)
+static CostModel loadCostModel(llvm::StringRef path)
 {
   // Map from string to GECost struct of each operation (ex. "comb.add" : [1.5, 0], "comb.or" : ...)
-  llvm::StringMap<GECost>model;
+  CostModel model;
 
   auto bufferOrErr = llvm::MemoryBuffer::getFile(path);
   if(!bufferOrErr)
@@ -129,23 +140,28 @@ static llvm::StringMap<GECost> loadCostModel(llvm::StringRef path, double &ffGEP
     if(auto v = entry->getNumber("fixed_ge"))
       cost.fixedGE = *v;
 
-    model[kv.first] = cost;
+    model.logicGE[kv.first] = cost;
   }
+
+  if(auto *delays = root->getObject("delay_fo4"))
+    for(auto & kv : *delays)
+      if(auto v = kv.second.getAsNumber())
+        model.delayFO4[kv.first] = *v;
 
   // load cost for flip flops
   if(auto v = root->getNumber("ff_ge_per_bit"))
-    ffGEPerBit = *v;
+    model.ffGEPerBit = *v;
   else
     llvm::errs() << "Warning: cost model is missing 'ff_ge_per_bit', defaulting to 0\n";
 
   // load cost for SRAM bits
   if(auto v = root->getNumber("sram_ge_per_bit"))
-    sramGEPerBit = *v;
+    model.sramGEPerBit = *v;
   else
     llvm::errs() << "Warning cost mosdel is missing 'sram_ge_per_bit', defraulting to 0\n";
 
   if(auto v = root->getNumber("sram_fixed_ge"))
-    sramFixedGE = *v;
+    model.sramFixedGE = *v;
 
   return model;
 }
@@ -160,6 +176,90 @@ static uint64_t getTotalBits(Type type)
     return arrTy.getNumElements() * getTotalBits(arrTy.getElementType());
 
   return 0;
+}
+
+static GEResult runGEAnalysis(ModuleOp module, const CostModel &costModel, llvm::raw_ostream &out,
+                              llvm::raw_ostream &err, bool verbose)
+{
+  GEResult result;
+  module.walk([&](Operation *op)
+  {
+    llvm::StringRef opName = op->getName().getStringRef();
+
+    if(auto firreg = dyn_cast<circt::seq::FirRegOp>(op))
+    {
+      uint64_t bits = getTotalBits(firreg.getType());
+      if(bits == 0)
+      {
+        err << "Warning: seq.firreg with unrecognized type. 0 FF bits counted\n";
+        return;
+      }
+
+      result.totalFFBits += bits;
+
+      if(verbose)
+        out << "FF: " << firreg.getName() << " (" << bits << " bits)\n";
+
+      return;
+    }
+
+    // SRAM
+    if(auto firmem = dyn_cast<circt::seq::FirMemOp>(op))
+    {
+      auto memType = dyn_cast<circt::seq::FirMemType>(firmem.getType());
+      if(!memType)
+      {
+        err << "Warning: seq.firmem with unrecognized type, 0 SRAM bits counted\n";
+        return;
+      }
+
+      uint64_t depth = memType.getDepth();
+      uint64_t width = memType.getWidth();
+      uint64_t bits  = depth * width;
+
+      result.totalSramBits += bits;
+      result.totalSramMacros++;
+
+      if(verbose)
+        out << "SRAM: " << firmem.getName() << " (" << depth << " x " << width << " = " << bits << " bits)\n";
+
+      return;
+    }
+
+    auto it = costModel.logicGE.find(opName);
+    if(it == costModel.logicGE.end())
+    {
+      out << "Warning: No cost entry for '" << opName << "', skipping\n";
+      return;
+    }
+
+    unsigned width{};
+    if(op->getNumResults() > 0)
+    {
+     if(auto intTy = dyn_cast<IntegerType>(op->getResult(0).getType()))
+        width = intTy.getWidth();
+    }
+
+    double ge = it->second.gePerBit * width + it->second.fixedGE;
+    result.totalLogicGE += ge;
+    if(verbose)
+      out << opName << " (width " << width << "): " << llvm::format("%.2f", ge) << " GE\n";
+  });
+
+  result.totalFFGE = result.totalFFBits * costModel.ffGEPerBit;
+  result.totalSramGE = result.totalSramBits * costModel.sramGEPerBit + result.totalSramMacros * costModel.sramFixedGE;
+
+  return result;
+}
+
+static void printGEReport(const GEResult &r, llvm::raw_ostream &out)
+{
+
+  out << "--------\n"
+      << "Logic GE: " << llvm::format("%.2f", r.totalLogicGE)<< "\n"
+      << "FF GE:    " << llvm::format("%.2f", r.totalFFGE) << " (" << r.totalFFBits << " bits)\n"
+      << "SRAM GE:  " << llvm::format("%.2f", r.totalSramGE) << " (" << r.totalSramBits << " bits in " << r.totalSramMacros << " macro(s))\n"
+      << "Total GE: " << llvm:: format("%.2f", r.totalLogicGE + r.totalFFGE + r.totalSramGE) << "\n";
 }
 
 int main(int argc, char** argv)
@@ -196,89 +296,21 @@ int main(int argc, char** argv)
     return 1;
   }
 
+  CostModel costModel = loadCostModel(inputCostModelJSON);
 
-  double ffGEPerBit{}, sramGEPerBit{}, sramFixedGE{};
+  bool doGE  = runGE  || (!runGE && !runFO4);
+  bool doFO4 = runFO4 || (!runGE && !runFO4);
 
-  llvm::StringMap<GECost> costModel = loadCostModel(inputCostModelJSON, ffGEPerBit, sramGEPerBit, sramFixedGE);
-
-  double totalLogicGE{};
-
-  // macros is how many arrays classify as SRAM
-  long long totalFFBits{}, totalSramBits{}, totalSramMacros{};
-
-  module->walk([&](Operation *op)
+  if(doGE)
   {
-    llvm::StringRef opName = op->getName().getStringRef();
+    GEResult ge = runGEAnalysis(*module, costModel, outputFile.os(), errorFile.os(), verbose);
+    printGEReport(ge, outputFile.os());
+  }
 
-    // Flip Flops
-    if(auto firreg = dyn_cast<circt::seq::FirRegOp>(op))
-    {
-      uint64_t bits = getTotalBits(firreg.getType());
-      if(bits == 0)
-      {
-        errorFile.os() << "Warning: seq.firreg with unrecognized type. 0 FF bits counted\n";
-        return;
-      }
-
-      totalFFBits += bits;
-
-      if(verbose)
-        outputFile.os() << "FF: " << firreg.getName() << " (" << bits << " bits)\n";
-
-      return;
-    }
-
-    // SRAM
-    if(auto firmem = dyn_cast<circt::seq::FirMemOp>(op))
-    {
-      auto memType = dyn_cast<circt::seq::FirMemType>(firmem.getType());
-      if(!memType)
-      {
-        errorFile.os() << "Warning: seq.firmem with unrecognized type, 0 SRAM bits counted\n";
-        return;
-      }
-
-      uint64_t depth = memType.getDepth();
-      uint64_t width = memType.getWidth();
-      uint64_t bits  = depth * width;
-
-      totalSramBits += bits;
-      totalSramMacros++;
-
-      if(verbose)
-        outputFile.os() << "SRAM: " << firmem.getName() << " (" << depth << " x " << width << " = " << bits << " bits)\n";
-
-      return;
-    }
-
-    auto it = costModel.find(opName);
-    if(it == costModel.end())
-    {
-      errorFile.os() << "Warning: No cost entry for '" << opName << "', skipping\n";
-      return;
-    }
-
-    unsigned width{};
-    if(op->getNumResults() > 0)
-    {
-     if(auto intTy = dyn_cast<IntegerType>(op->getResult(0).getType()))
-        width = intTy.getWidth();
-    }
-
-    double ge = it->second.gePerBit * width + it->second.fixedGE;
-    totalLogicGE += ge;
-    if(verbose)
-      outputFile.os() << opName << " (width " << width << "): " << llvm::format("%.2f", ge) << " GE\n";
-  });
-
-  double totalFFGE = totalFFBits * ffGEPerBit;
-  double totalSramGE = totalSramBits * sramGEPerBit + totalSramMacros * sramFixedGE;
-
-  outputFile.os() << "--------\n"
-                  << "Logic GE: " << llvm::format("%.2f", totalLogicGE)<< "\n"
-                  << "FF GE:    " << llvm::format("%.2f", totalFFGE) << " (" << totalFFBits << " bits)\n"
-                  << "SRAM GE:  " << llvm::format("%.2f", totalSramGE) << " (" << totalSramBits << " bits in " << totalSramMacros << " macro(s))\n"
-                  << "Total GE: " << llvm:: format("%.2f", totalLogicGE + totalFFGE + totalSramGE) << "\n";
+  if(doFO4)
+  {
+    // Do FO4 analysis
+  }
 
   outputFile.keep();
   errorFile.keep();
