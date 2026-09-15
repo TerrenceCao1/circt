@@ -17,6 +17,25 @@
     "comb.concat":  { "ge_per_bit": 0.0, "fixed_ge": 0 },
     "hw.constant":  { "ge_per_bit": 0.0, "fixed_ge": 0 }
   },
+
+  "delay_fo4": {
+    "comb.and":     { "fo4": 1.0 },
+    "comb.or":      { "fo4": 1.0 },
+    "comb.xor":     { "fo4": 2.0 },
+    "comb.mux":     { "fo4": 2.0 },
+    "comb.add":     { "fo4_log2_coeff": 2.0, "fo4_log2_const": 2.0 },
+    "comb.sub":     { "fo4_log2_coeff": 2.0, "fo4_log2_const": 2.4 },
+    "comb.mul":     { "fo4_log2_coeff": 3.0, "fo4_log2_const": 12.0 },
+    "comb.divu":    { "fo4_per_bit": 4.2, "fo4_fixed": 0 },
+    "comb.divs":    { "fo4_per_bit": 4.6, "fo4_fixed": 0 },
+    "comb.icmp": {
+      "eq_predicates":  { "predicates": ["eq", "ceq", "ne", "cne"], "fo4_log2_coeff": 1.0, "fo4_log2_const": 2.0 },
+      "mag_predicates": { "predicates": ["ult","ule","ugt","uge","slt","sle","sgt","sge"], "fo4_log2_coeff": 2.0, "fo4_log2_const": 2.4 }
+    },
+    "comb.extract": { "fo4": 0.0 },
+    "comb.concat":  { "fo4": 0.0 },
+    "hw.constant":  { "fo4": 0.0 }
+  },
   "ff_ge_per_bit": 6.0,
   "sram_ge_per_bit": 0.4
 }
