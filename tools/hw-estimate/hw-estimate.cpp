@@ -11,9 +11,12 @@
  * -FO4 Analysis
  */
 
+#include <cmath>
+#include "circt/Dialect/Comb/CombDialect.h"
 #include "circt/Dialect/HW/HWTypes.h"
 #include "circt/Dialect/Seq/SeqOps.h"
 #include "circt/Dialect/Seq/SeqTypes.h"
+#include "circt/Dialect/Comb/CombOps.h"
 #include "mlir/IR/OpDefinition.h"
 #include "mlir/InitAllDialects.h"
 #include "mlir/IR/DialectRegistry.h"
@@ -83,10 +86,20 @@ namespace
     double fixedGE{};
   };
 
+  struct FO4Cost
+  {
+    bool hasLog2Model{false};
+    double log2Coeff{};
+    double log2Const{};
+    double fixed{};
+    double perBit{};
+  };
+
   struct CostModel
   {
     llvm::StringMap<GECost> logicGE;
-    llvm::StringMap<double>  delayFO4;
+    llvm::StringMap<FO4Cost>  delayFO4;
+    llvm::StringMap<std::string> icmpPredicateGroup;
     double ffGEPerBit{};
     double sramGEPerBit{};
     double sramFixedGE{};
@@ -167,6 +180,28 @@ static void loadGECostModel(CostModel& model, llvm::StringRef path)
     model.sramFixedGE = *v;
 }
 
+static FO4Cost parseFO4Entry(llvm::json::Object *entry)
+{
+  FO4Cost cost;
+
+  if(auto v = entry->getNumber("fo4"))
+    cost.fixed = *v;
+  if(auto v = entry->getNumber("fo4_fixed"))
+    cost.fixed = *v;
+  if(auto v = entry->getNumber("fo4_per_bit"))
+    cost.perBit = *v;
+
+  if(auto v = entry->getNumber("fo4_log2_coeff"))
+  {
+    cost.log2Coeff = *v;
+    cost.hasLog2Model = true;
+  }
+  if(auto v = entry->getNumber("fo4_log2_const"))
+    cost.log2Const = *v;
+
+  return cost;
+}
+
 static void loadFO4CostModel(CostModel& model, llvm::StringRef path)
 {
   auto bufferOrErr = llvm::MemoryBuffer::getFile(path);
@@ -198,8 +233,28 @@ static void loadFO4CostModel(CostModel& model, llvm::StringRef path)
       llvm::json::Object *entry = kv.second.getAsObject();
       if(!entry) continue;
 
-      // TODO: Fix this to support all kinds of JSON entry labels (fo4, fo4_log2_coeff, fo4_log2_const, etc.)
-      model.delayFO4[kv.first] = *entry->getNumber("fo4");
+      if(kv.first == "comb.icmp")
+      {
+        if(auto *eq = entry->getObject("eq_predicates"))
+        {
+          model.delayFO4["comb.icmp.eq"] = parseFO4Entry(eq);
+          if(auto *preds = eq->getArray("predicates"))
+            for(auto &p : *preds)
+              if(auto s = p.getAsString())
+                model.icmpPredicateGroup[*s] = "comb.icmp.eq";
+        }
+        if(auto *mag = entry->getObject("mag_predicates"))
+        {
+          model.delayFO4["comb.icomp.mag"] = parseFO4Entry(mag);
+          if(auto *preds = mag->getArray("predicates"))
+            for(auto &p : *preds)
+              if(auto s = p.getAsString())
+                model.icmpPredicateGroup[*s] = "comb.icmp.mag";
+        }
+        continue;
+      }
+
+      model.delayFO4[kv.first] = parseFO4Entry(entry);
     }
 }
 
@@ -299,6 +354,16 @@ static void printGEReport(const GEResult &r, llvm::raw_ostream &out)
       << "Total GE: " << llvm:: format("%.2f", r.totalLogicGE + r.totalFFGE + r.totalSramGE) << "\n";
 }
 
+static double evalFO4Cost(const FO4Cost & cost, unsigned width)
+{
+  if(cost.hasLog2Model)
+  {
+    double bits = static_cast<double>(std::max<unsigned>(width, 1));
+    return cost.log2Coeff * std::log2(bits) + cost.log2Const;
+  }
+  return cost.fixed + cost.perBit * width;
+}
+
 static FO4Result runFO4Analysis(ModuleOp module, const CostModel &costModel, llvm::raw_ostream &out,
                               llvm::raw_ostream &err, bool verbose)
 {
@@ -346,10 +411,27 @@ static FO4Result runFO4Analysis(ModuleOp module, const CostModel &costModel, llv
     if(op->getNumResults() == 0)
       return;
 
+    llvm::StringRef lookupName = opName;
+    unsigned width = 0;
+    if(auto icmp = dyn_cast<circt::comb::ICmpOp>(op))
+    {
+      std::string predName = circt::comb::stringifyICmpPredicate(icmp.getPredicate()).str();
+      auto groupIt = costModel.icmpPredicateGroup.find(predName);
+      if(groupIt != costModel.icmpPredicateGroup.end())
+        lookupName = groupIt->second;
+
+      if(auto intTy = dyn_cast<IntegerType>(icmp.getLhs().getType()))
+        width = intTy.getWidth();
+    }
+    else if(auto intTy = dyn_cast<IntegerType>(op->getResult(0).getType()))
+    {
+      width = intTy.getWidth();
+    }
+
     double opDelay{};
     auto it = costModel.delayFO4.find(opName);
     if(it != costModel.delayFO4.end())
-      opDelay = it->second;
+      opDelay = evalFO4Cost(it->second, width);
     else
       out << "Warning: No FO4 delay entry for '" << opName << "', assuming 0 delay\n";
 
@@ -362,7 +444,7 @@ static FO4Result runFO4Analysis(ModuleOp module, const CostModel &costModel, llv
       arrival[res] = thisArrival;
 
     if(verbose)
-      out << opName << ": arrival" << llvm::format("%.2f", thisArrival) << " FO4\n";
+      out << opName << " (width " << width << "): arrival" << llvm::format("%.2f", thisArrival) << " FO4\n";
   });
 
   return result;
