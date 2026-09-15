@@ -14,6 +14,7 @@
 #include "circt/Dialect/HW/HWTypes.h"
 #include "circt/Dialect/Seq/SeqOps.h"
 #include "circt/Dialect/Seq/SeqTypes.h"
+#include "mlir/IR/OpDefinition.h"
 #include "mlir/InitAllDialects.h"
 #include "mlir/IR/DialectRegistry.h"
 #include "mlir/IR/MLIRContext.h"
@@ -22,6 +23,7 @@
 #include "mlir/Parser/Parser.h"
 #include "mlir/Pass/PassManager.h"
 #include "circt/InitAllDialects.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Casting.h"
@@ -99,13 +101,17 @@ namespace
     long long totalSramBits{};
     long long totalSramMacros{};
   };
+
+  struct FO4Result
+  {
+    double          criticalFO4{};
+    long long       numTimingPaths{};
+    std::string     criticalSinkName;
+  };
 } // End of anonymous namespace
 
-static CostModel loadCostModel(llvm::StringRef path)
+static void loadGECostModel(CostModel& model, llvm::StringRef path)
 {
-  // Map from string to GECost struct of each operation (ex. "comb.add" : [1.5, 0], "comb.or" : ...)
-  CostModel model;
-
   auto bufferOrErr = llvm::MemoryBuffer::getFile(path);
   if(!bufferOrErr)
   {
@@ -121,7 +127,9 @@ static CostModel loadCostModel(llvm::StringRef path)
   }
 
   llvm::json::Object *root = parsed->getAsObject(); // root is an object of the entire JSON file
-  llvm::json::Object *logicGE = root->getObject("logic_ge"); // logicGE is the object of just the logic_ge parts
+
+  llvm::json::Object *logicGE = root->getObject("logic_ge");
+
   if(!logicGE)
   {
     llvm::errs() << "Error: cost model is missing 'logic_ge' object\n";
@@ -143,11 +151,6 @@ static CostModel loadCostModel(llvm::StringRef path)
     model.logicGE[kv.first] = cost;
   }
 
-  if(auto *delays = root->getObject("delay_fo4"))
-    for(auto & kv : *delays)
-      if(auto v = kv.second.getAsNumber())
-        model.delayFO4[kv.first] = *v;
-
   // load cost for flip flops
   if(auto v = root->getNumber("ff_ge_per_bit"))
     model.ffGEPerBit = *v;
@@ -162,8 +165,42 @@ static CostModel loadCostModel(llvm::StringRef path)
 
   if(auto v = root->getNumber("sram_fixed_ge"))
     model.sramFixedGE = *v;
+}
 
-  return model;
+static void loadFO4CostModel(CostModel& model, llvm::StringRef path)
+{
+  auto bufferOrErr = llvm::MemoryBuffer::getFile(path);
+  if(!bufferOrErr)
+  {
+    llvm::errs() << "Error: couldn't open cost model file: " << path << "\n";
+    exit(1);
+  }
+
+  llvm::Expected<llvm::json::Value> parsed = llvm::json::parse(bufferOrErr.get()->getBuffer());
+  if(!parsed)
+  {
+    llvm::errs() << "Error: failed to parse JSON File: " << llvm::toString(parsed.takeError()) << "\n";
+    exit(1);
+  }
+
+  llvm::json::Object *root = parsed->getAsObject(); // root is an object of the entire JSON file
+
+    llvm::json::Object *fo4Delays = root->getObject("delay_fo4");
+
+    if(!fo4Delays)
+    {
+      llvm::errs() << "Error: cost model is missing 'delay_fo4' object\n";
+      exit(1);
+    }
+
+    for(auto &kv : *fo4Delays)
+    {
+      llvm::json::Object *entry = kv.second.getAsObject();
+      if(!entry) continue;
+
+      // TODO: Fix this to support all kinds of JSON entry labels (fo4, fo4_log2_coeff, fo4_log2_const, etc.)
+      model.delayFO4[kv.first] = *entry->getNumber("fo4");
+    }
 }
 
 // Recursive helper for getting the total number of flip flop bits
@@ -262,6 +299,87 @@ static void printGEReport(const GEResult &r, llvm::raw_ostream &out)
       << "Total GE: " << llvm:: format("%.2f", r.totalLogicGE + r.totalFFGE + r.totalSramGE) << "\n";
 }
 
+static FO4Result runFO4Analysis(ModuleOp module, const CostModel &costModel, llvm::raw_ostream &out,
+                              llvm::raw_ostream &err, bool verbose)
+{
+  FO4Result result;
+  llvm::DenseMap<Value, double> arrival; // the map is in format <operation, arrival time>
+
+  auto getArrival = [&](Value v) -> double
+  {
+    auto it = arrival.find(v);
+    if(it != arrival.end())
+      return it->second;
+    return 0.0;
+  };
+
+  auto recordTimingPath = [&](double delay, llvm::StringRef sinkName)
+  {
+    result.numTimingPaths++;
+    if(delay > result.criticalFO4)
+    {
+      result.criticalFO4 = delay;
+      result.criticalSinkName = sinkName.str();
+    }
+    if(verbose)
+      out << "Path -> " << sinkName << ": " << llvm::format("%.2f", delay) << " FO4\n";
+  };
+
+  module.walk([&](Operation *op)
+  {
+    llvm::StringRef opName = op->getName().getStringRef();
+
+    if(auto firreg = dyn_cast<circt::seq::FirRegOp>(op))
+    {
+      recordTimingPath(getArrival(firreg.getNext()), firreg.getName());
+      arrival[firreg.getResult()] = 0.0;
+      return;
+    }
+
+    if(op->hasTrait<OpTrait::IsTerminator>())
+    {
+      for(Value operand : op->getOperands())
+        recordTimingPath(getArrival(operand), "output");
+      return;
+    }
+
+    if(op->getNumResults() == 0)
+      return;
+
+    double opDelay{};
+    auto it = costModel.delayFO4.find(opName);
+    if(it != costModel.delayFO4.end())
+      opDelay = it->second;
+    else
+      out << "Warning: No FO4 delay entry for '" << opName << "', assuming 0 delay\n";
+
+    double maxOperandArrival = 0.0;
+    for(Value operand : op->getOperands())
+      maxOperandArrival = std::max(maxOperandArrival, getArrival(operand));
+
+    double thisArrival = maxOperandArrival + opDelay;
+    for(Value res : op->getResults())
+      arrival[res] = thisArrival;
+
+    if(verbose)
+      out << opName << ": arrival" << llvm::format("%.2f", thisArrival) << " FO4\n";
+  });
+
+  return result;
+
+}
+
+static void printFO4Report(const FO4Result &r, llvm::raw_ostream &out)
+{
+  out << "-------------\n"
+      << "Critical Path: " << llvm::format("%.2f", r.criticalFO4) << " FO4\n";
+
+  if(!r.criticalSinkName.empty())
+    out << " ends at: " << r.criticalSinkName << "\n";
+
+  out << "Timing paths checked: " << r.numTimingPaths << "\n";
+}
+
 int main(int argc, char** argv)
 {
   llvm::InitLLVM y(argc, argv);
@@ -296,20 +414,23 @@ int main(int argc, char** argv)
     return 1;
   }
 
-  CostModel costModel = loadCostModel(inputCostModelJSON);
-
   bool doGE  = runGE  || (!runGE && !runFO4);
   bool doFO4 = runFO4 || (!runGE && !runFO4);
 
+  CostModel costModel;
+
   if(doGE)
   {
+    loadGECostModel(costModel, inputCostModelJSON);
     GEResult ge = runGEAnalysis(*module, costModel, outputFile.os(), errorFile.os(), verbose);
     printGEReport(ge, outputFile.os());
   }
 
   if(doFO4)
   {
-    // Do FO4 analysis
+    loadFO4CostModel(costModel, inputCostModelJSON);
+    FO4Result fo4 = runFO4Analysis(*module, costModel, outputFile.os(), errorFile.os(), verbose);
+    printFO4Report(fo4, outputFile.os());
   }
 
   outputFile.keep();
