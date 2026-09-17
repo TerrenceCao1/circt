@@ -12,6 +12,7 @@
  */
 
 #include <cmath>
+#include <unordered_map>
 #include "circt/Dialect/Comb/CombDialect.h"
 #include "circt/Dialect/HW/HWTypes.h"
 #include "circt/Dialect/Seq/SeqOps.h"
@@ -78,31 +79,15 @@ static llvm::cl::opt<bool> runFO4(
     llvm::cl::init(false)
     );
 
+// --------------------------------------------------------------------------
+// Helper Structs
+// --------------------------------------------------------------------------
 namespace
 {
   struct GECost
   {
     double gePerBit{};
     double fixedGE{};
-  };
-
-  struct FO4Cost
-  {
-    bool hasLog2Model{false};
-    double log2Coeff{};
-    double log2Const{};
-    double fixed{};
-    double perBit{};
-  };
-
-  struct CostModel
-  {
-    llvm::StringMap<GECost> logicGE;
-    llvm::StringMap<FO4Cost>  delayFO4;
-    llvm::StringMap<std::string> icmpPredicateGroup;
-    double ffGEPerBit{};
-    double sramGEPerBit{};
-    double sramFixedGE{};
   };
 
   struct GEResult
@@ -115,14 +100,36 @@ namespace
     long long totalSramMacros{};
   };
 
+  struct FO4Cost
+  {
+    bool hasLog2Model{false};
+    double log2Coeff{};
+    double log2Const{};
+    double fixed{};
+    double perBit{};
+  };
+
   struct FO4Result
   {
     double          criticalFO4{};
     long long       numTimingPaths{};
     std::string     criticalSinkName;
   };
+
+  struct CostModel
+  {
+    llvm::StringMap<GECost> logicGE;
+    llvm::StringMap<FO4Cost>  delayFO4;
+    llvm::StringMap<std::string> icmpPredicateGroup;
+    double ffGEPerBit{};
+    double sramGEPerBit{};
+    double sramFixedGE{};
+  };
 } // End of anonymous namespace
 
+// --------------------------------------------------------------------------
+// Running GE Analysis
+// --------------------------------------------------------------------------
 static void loadGECostModel(CostModel& model, llvm::StringRef path)
 {
   auto bufferOrErr = llvm::MemoryBuffer::getFile(path);
@@ -180,6 +187,113 @@ static void loadGECostModel(CostModel& model, llvm::StringRef path)
     model.sramFixedGE = *v;
 }
 
+
+// Recursive helper for getting the total number of flip flop bits
+static uint64_t getTotalBits(Type type)
+{
+  if(auto intTy = dyn_cast<IntegerType>(type))
+    return intTy.getWidth();
+
+  if(auto arrTy = dyn_cast<circt::hw::ArrayType>(type))
+    return arrTy.getNumElements() * getTotalBits(arrTy.getElementType());
+
+  return 0;
+}
+
+static GEResult runGEAnalysis(ModuleOp module, const CostModel &costModel, llvm::raw_ostream &out,
+                              llvm::raw_ostream &err, bool verbose)
+{
+  GEResult result;
+  std::unordered_map<std::string, unsigned> missingOperationsTable;
+
+  module.walk([&](Operation *op)
+  {
+    llvm::StringRef opName = op->getName().getStringRef();
+
+    if(auto firreg = dyn_cast<circt::seq::FirRegOp>(op))
+    {
+      uint64_t bits = getTotalBits(firreg.getType());
+      if(bits == 0)
+      {
+        err << "Warning: seq.firreg with unrecognized type. 0 FF bits counted\n";
+        return;
+      }
+
+      result.totalFFBits += bits;
+
+      if(verbose)
+        out << "FF: " << firreg.getName() << " (" << bits << " bits)\n";
+
+      return;
+    }
+
+    // SRAM
+    if(auto firmem = dyn_cast<circt::seq::FirMemOp>(op))
+    {
+      auto memType = dyn_cast<circt::seq::FirMemType>(firmem.getType());
+      if(!memType)
+      {
+        err << "Warning: seq.firmem with unrecognized type, 0 SRAM bits counted\n";
+        return;
+      }
+
+      uint64_t depth = memType.getDepth();
+      uint64_t width = memType.getWidth();
+      uint64_t bits  = depth * width;
+
+      result.totalSramBits += bits;
+      result.totalSramMacros++;
+
+      if(verbose)
+        out << "SRAM: " << firmem.getName() << " (" << depth << " x " << width << " = " << bits << " bits)\n";
+
+      return;
+    }
+
+    auto it = costModel.logicGE.find(opName);
+    if(it == costModel.logicGE.end())
+    {
+      missingOperationsTable[opName.str()]++;
+      return;
+    }
+
+    unsigned width{};
+    if(op->getNumResults() > 0)
+    {
+     if(auto intTy = dyn_cast<IntegerType>(op->getResult(0).getType()))
+        width = intTy.getWidth();
+    }
+
+    double ge = it->second.gePerBit * width + it->second.fixedGE;
+    result.totalLogicGE += ge;
+    if(verbose)
+      out << opName << " (width " << width << "): " << llvm::format("%.2f", ge) << " GE\n";
+  });
+
+  for(const auto& [key, value] : missingOperationsTable)
+  {
+    out << "Warning: No GE entry for '" << key << "', assuming 0 GE for " << value << " instances\n";
+  }
+
+  result.totalFFGE = result.totalFFBits * costModel.ffGEPerBit;
+  result.totalSramGE = result.totalSramBits * costModel.sramGEPerBit + result.totalSramMacros * costModel.sramFixedGE;
+
+  return result;
+}
+
+static void printGEReport(const GEResult &r, llvm::raw_ostream &out)
+{
+
+  out << "--------\n"
+      << "Logic GE: " << llvm::format("%.2f", r.totalLogicGE)<< "\n"
+      << "FF GE:    " << llvm::format("%.2f", r.totalFFGE) << " (" << r.totalFFBits << " bits)\n"
+      << "SRAM GE:  " << llvm::format("%.2f", r.totalSramGE) << " (" << r.totalSramBits << " bits in " << r.totalSramMacros << " macro(s))\n"
+      << "Total GE: " << llvm:: format("%.2f", r.totalLogicGE + r.totalFFGE + r.totalSramGE) << "\n\n";
+}
+
+// --------------------------------------------------------------------------
+// Running FO4 Analysis
+// --------------------------------------------------------------------------
 static FO4Cost parseFO4Entry(llvm::json::Object *entry)
 {
   FO4Cost cost;
@@ -245,7 +359,7 @@ static void loadFO4CostModel(CostModel& model, llvm::StringRef path)
         }
         if(auto *mag = entry->getObject("mag_predicates"))
         {
-          model.delayFO4["comb.icomp.mag"] = parseFO4Entry(mag);
+          model.delayFO4["comb.icmp.mag"] = parseFO4Entry(mag);
           if(auto *preds = mag->getArray("predicates"))
             for(auto &p : *preds)
               if(auto s = p.getAsString())
@@ -253,106 +367,10 @@ static void loadFO4CostModel(CostModel& model, llvm::StringRef path)
         }
         continue;
       }
-
       model.delayFO4[kv.first] = parseFO4Entry(entry);
     }
 }
 
-// Recursive helper for getting the total number of flip flop bits
-static uint64_t getTotalBits(Type type)
-{
-  if(auto intTy = dyn_cast<IntegerType>(type))
-    return intTy.getWidth();
-
-  if(auto arrTy = dyn_cast<circt::hw::ArrayType>(type))
-    return arrTy.getNumElements() * getTotalBits(arrTy.getElementType());
-
-  return 0;
-}
-
-static GEResult runGEAnalysis(ModuleOp module, const CostModel &costModel, llvm::raw_ostream &out,
-                              llvm::raw_ostream &err, bool verbose)
-{
-  GEResult result;
-  module.walk([&](Operation *op)
-  {
-    llvm::StringRef opName = op->getName().getStringRef();
-
-    if(auto firreg = dyn_cast<circt::seq::FirRegOp>(op))
-    {
-      uint64_t bits = getTotalBits(firreg.getType());
-      if(bits == 0)
-      {
-        err << "Warning: seq.firreg with unrecognized type. 0 FF bits counted\n";
-        return;
-      }
-
-      result.totalFFBits += bits;
-
-      if(verbose)
-        out << "FF: " << firreg.getName() << " (" << bits << " bits)\n";
-
-      return;
-    }
-
-    // SRAM
-    if(auto firmem = dyn_cast<circt::seq::FirMemOp>(op))
-    {
-      auto memType = dyn_cast<circt::seq::FirMemType>(firmem.getType());
-      if(!memType)
-      {
-        err << "Warning: seq.firmem with unrecognized type, 0 SRAM bits counted\n";
-        return;
-      }
-
-      uint64_t depth = memType.getDepth();
-      uint64_t width = memType.getWidth();
-      uint64_t bits  = depth * width;
-
-      result.totalSramBits += bits;
-      result.totalSramMacros++;
-
-      if(verbose)
-        out << "SRAM: " << firmem.getName() << " (" << depth << " x " << width << " = " << bits << " bits)\n";
-
-      return;
-    }
-
-    auto it = costModel.logicGE.find(opName);
-    if(it == costModel.logicGE.end())
-    {
-      out << "Warning: No cost entry for '" << opName << "', skipping\n";
-      return;
-    }
-
-    unsigned width{};
-    if(op->getNumResults() > 0)
-    {
-     if(auto intTy = dyn_cast<IntegerType>(op->getResult(0).getType()))
-        width = intTy.getWidth();
-    }
-
-    double ge = it->second.gePerBit * width + it->second.fixedGE;
-    result.totalLogicGE += ge;
-    if(verbose)
-      out << opName << " (width " << width << "): " << llvm::format("%.2f", ge) << " GE\n";
-  });
-
-  result.totalFFGE = result.totalFFBits * costModel.ffGEPerBit;
-  result.totalSramGE = result.totalSramBits * costModel.sramGEPerBit + result.totalSramMacros * costModel.sramFixedGE;
-
-  return result;
-}
-
-static void printGEReport(const GEResult &r, llvm::raw_ostream &out)
-{
-
-  out << "--------\n"
-      << "Logic GE: " << llvm::format("%.2f", r.totalLogicGE)<< "\n"
-      << "FF GE:    " << llvm::format("%.2f", r.totalFFGE) << " (" << r.totalFFBits << " bits)\n"
-      << "SRAM GE:  " << llvm::format("%.2f", r.totalSramGE) << " (" << r.totalSramBits << " bits in " << r.totalSramMacros << " macro(s))\n"
-      << "Total GE: " << llvm:: format("%.2f", r.totalLogicGE + r.totalFFGE + r.totalSramGE) << "\n";
-}
 
 static double evalFO4Cost(const FO4Cost & cost, unsigned width)
 {
@@ -369,6 +387,7 @@ static FO4Result runFO4Analysis(ModuleOp module, const CostModel &costModel, llv
 {
   FO4Result result;
   llvm::DenseMap<Value, double> arrival; // the map is in format <operation, arrival time>
+  std::unordered_map<std::string, unsigned> missingOperationsTable;
 
   auto getArrival = [&](Value v) -> double
   {
@@ -429,11 +448,11 @@ static FO4Result runFO4Analysis(ModuleOp module, const CostModel &costModel, llv
     }
 
     double opDelay{};
-    auto it = costModel.delayFO4.find(opName);
+    auto it = costModel.delayFO4.find(lookupName);
     if(it != costModel.delayFO4.end())
       opDelay = evalFO4Cost(it->second, width);
     else
-      out << "Warning: No FO4 delay entry for '" << opName << "', assuming 0 delay\n";
+      missingOperationsTable[opName.str()]++;
 
     double maxOperandArrival = 0.0;
     for(Value operand : op->getOperands())
@@ -446,6 +465,11 @@ static FO4Result runFO4Analysis(ModuleOp module, const CostModel &costModel, llv
     if(verbose)
       out << opName << " (width " << width << "): arrival" << llvm::format("%.2f", thisArrival) << " FO4\n";
   });
+
+  for(const auto& [key, value] : missingOperationsTable)
+  {
+    out << "Warning: No FO4 entry for '" << key << "', assuming 0 delay for " << value << " instances\n";
+  }
 
   return result;
 

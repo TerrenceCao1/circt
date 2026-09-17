@@ -17,7 +17,6 @@
     "comb.concat":  { "ge_per_bit": 0.0, "fixed_ge": 0 },
     "hw.constant":  { "ge_per_bit": 0.0, "fixed_ge": 0 }
   },
-
   "delay_fo4": {
     "comb.and":     { "fo4": 1.0 },
     "comb.or":      { "fo4": 1.0 },
