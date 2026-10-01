@@ -13,11 +13,14 @@
 
 #include <cmath>
 #include <unordered_map>
+#include <vector>
 #include "circt/Dialect/Comb/CombDialect.h"
 #include "circt/Dialect/HW/HWTypes.h"
 #include "circt/Dialect/Seq/SeqOps.h"
 #include "circt/Dialect/Seq/SeqTypes.h"
+#include "circt/Dialect/LLHD/LLHDOps.h"
 #include "circt/Dialect/Comb/CombOps.h"
+#include "circt/Dialect/HW/HWOps.h"
 #include "mlir/IR/OpDefinition.h"
 #include "mlir/InitAllDialects.h"
 #include "mlir/IR/DialectRegistry.h"
@@ -102,18 +105,20 @@ namespace
 
   struct FO4Cost
   {
-    bool hasLog2Model{false};
-    double log2Coeff{};
-    double log2Const{};
-    double fixed{};
-    double perBit{};
+    bool    hasLog2Model{false};
+    double  log2Coeff{};
+    double  log2Const{};
+    double  fixed{};
+    double  perBit{};
+    bool    scalesWithOperands{false};
   };
 
   struct FO4Result
   {
-    double          criticalFO4{};
-    long long       numTimingPaths{};
-    std::string     criticalSinkName;
+    double                    criticalFO4{};
+    long long                 numTimingPaths{};
+    std::string               criticalSinkName;
+    std::vector<std::string>  criticalPath;
   };
 
   struct CostModel
@@ -124,6 +129,8 @@ namespace
     double ffGEPerBit{};
     double sramGEPerBit{};
     double sramFixedGE{};
+    double clkToQFO4{};   // [JSON] optional "clk_to_q_fo4", added at register startpoints
+    double setupFO4{};
   };
 } // End of anonymous namespace
 
@@ -200,11 +207,19 @@ static uint64_t getTotalBits(Type type)
   return 0;
 }
 
+static bool isReactiveLLHDProcess(circt::llhd::ProcessOp proc)
+{
+  bool hasWait = false;
+  proc.getBody().walk([&](circt::llhd::WaitOp) { hasWait = true; });
+  return hasWait;
+}
+
 static GEResult runGEAnalysis(ModuleOp module, const CostModel &costModel, llvm::raw_ostream &out,
                               llvm::raw_ostream &err, bool verbose)
 {
   GEResult result;
   std::unordered_map<std::string, unsigned> missingOperationsTable;
+  unsigned unloweredReactiveProcesses = 0;
 
   module.walk([&](Operation *op)
   {
@@ -225,6 +240,14 @@ static GEResult runGEAnalysis(ModuleOp module, const CostModel &costModel, llvm:
         out << "FF: " << firreg.getName() << " (" << bits << " bits)\n";
 
       return;
+    }
+
+    if(auto proc = dyn_cast<circt::llhd::ProcessOp>(op))
+    {
+      if(isReactiveLLHDProcess(proc))
+        unloweredReactiveProcesses++;
+      else if(verbose)
+        out << "Note: ignoring non-reactive llhd.process (simulation-only, e.g. an 'initial block); 0 GE\n";
     }
 
     // SRAM
@@ -275,6 +298,12 @@ static GEResult runGEAnalysis(ModuleOp module, const CostModel &costModel, llvm:
     out << "Warning: No GE entry for '" << key << "', assuming 0 GE for " << value << " instances\n";
   }
 
+
+ if(unloweredReactiveProcesses > 0)
+    out << "WARNING: " << unloweredReactiveProcesses << " unlowered REACTIVE llhd.process op(s) found "
+        << "(contains llhd.wait, meant to react to signal changes). Logic GE is likely INCOMPLETE -- "
+        << "run additional LLHD lowering passes before trusting this total.\n";
+
   result.totalFFGE = result.totalFFBits * costModel.ffGEPerBit;
   result.totalSramGE = result.totalSramBits * costModel.sramGEPerBit + result.totalSramMacros * costModel.sramFixedGE;
 
@@ -294,25 +323,28 @@ static void printGEReport(const GEResult &r, llvm::raw_ostream &out)
 // --------------------------------------------------------------------------
 // Running FO4 Analysis
 // --------------------------------------------------------------------------
-static FO4Cost parseFO4Entry(llvm::json::Object *entry)
+static FO4Cost parseFO4Entry(llvm::StringRef name, llvm::json::Object *entry)
 {
   FO4Cost cost;
+  bool recognized = false;
 
-  if(auto v = entry->getNumber("fo4"))
-    cost.fixed = *v;
-  if(auto v = entry->getNumber("fo4_fixed"))
-    cost.fixed = *v;
-  if(auto v = entry->getNumber("fo4_per_bit"))
-    cost.perBit = *v;
+  if(auto v = entry->getNumber("fo4"))          {cost.fixed = *v; recognized = true;}
+  if(auto v = entry->getNumber("fo4_fixed"))    {cost.fixed = *v; recognized = true;}
+  if(auto v = entry->getNumber("fo4_per_bit"))  {cost.fixed = *v; recognized = true;}
 
   if(auto v = entry->getNumber("fo4_log2_coeff"))
   {
     cost.log2Coeff = *v;
     cost.hasLog2Model = true;
+    recognized = true;
   }
-  if(auto v = entry->getNumber("fo4_log2_const"))
-    cost.log2Const = *v;
 
+  if(auto v = entry->getNumber("fo4_log2_const")) {cost.fixed = *v; recognized = true;}
+
+  // TODO: implement scales_with_operands from json.
+
+  if(!recognized)
+    llvm::errs() << "Warning: delay_fo4 entry '" << name << "' has no recognized delay keys; defaults to 0 FO4.\n";
   return cost;
 }
 
@@ -334,40 +366,50 @@ static void loadFO4CostModel(CostModel& model, llvm::StringRef path)
 
   llvm::json::Object *root = parsed->getAsObject(); // root is an object of the entire JSON file
 
-    llvm::json::Object *fo4Delays = root->getObject("delay_fo4");
+  llvm::json::Object *fo4Delays = root->getObject("delay_fo4");
+  if(!root)
+  {
+    llvm::errs() << "Error: cost model root must be a JSON object\n";
+    exit(1);
+  }
 
-    if(!fo4Delays)
+  if(!fo4Delays)
+  {
+    llvm::errs() << "Error: cost model is missing 'delay_fo4' object\n";
+    exit(1);
+  }
+
+  if(auto v = root->getNumber("clk_to_q_fo4"))
+    model.clkToQFO4 = *v;
+  if(auto v = root->getNumber("setup_fo4"))
+    model.setupFO4 = *v;
+
+  for(auto &kv : *fo4Delays)
+  {
+    llvm::json::Object *entry = kv.second.getAsObject();
+    if(!entry) continue;
+
+    if(kv.first == "comb.icmp")
     {
-      llvm::errs() << "Error: cost model is missing 'delay_fo4' object\n";
-      exit(1);
-    }
-
-    for(auto &kv : *fo4Delays)
-    {
-      llvm::json::Object *entry = kv.second.getAsObject();
-      if(!entry) continue;
-
-      if(kv.first == "comb.icmp")
+      if(auto *eq = entry->getObject("eq_predicates"))
       {
-        if(auto *eq = entry->getObject("eq_predicates"))
-        {
-          model.delayFO4["comb.icmp.eq"] = parseFO4Entry(eq);
-          if(auto *preds = eq->getArray("predicates"))
-            for(auto &p : *preds)
-              if(auto s = p.getAsString())
-                model.icmpPredicateGroup[*s] = "comb.icmp.eq";
-        }
-        if(auto *mag = entry->getObject("mag_predicates"))
-        {
-          model.delayFO4["comb.icmp.mag"] = parseFO4Entry(mag);
-          if(auto *preds = mag->getArray("predicates"))
-            for(auto &p : *preds)
-              if(auto s = p.getAsString())
-                model.icmpPredicateGroup[*s] = "comb.icmp.mag";
-        }
-        continue;
+        model.delayFO4["comb.icmp.eq"] = parseFO4Entry("comb.icmp.eq_predicates", eq);
+        if(auto *preds = eq->getArray("predicates"))
+          for(auto &p : *preds)
+            if(auto s = p.getAsString())
+              model.icmpPredicateGroup[*s] = "comb.icmp.eq";
       }
-      model.delayFO4[kv.first] = parseFO4Entry(entry);
+      if(auto *mag = entry->getObject("mag_predicates"))
+      {
+        model.delayFO4["comb.icmp.mag"] = parseFO4Entry("comb.icmp.mag_predicates", mag);
+        if(auto *preds = mag->getArray("predicates"))
+          for(auto &p : *preds)
+            if(auto s = p.getAsString())
+              model.icmpPredicateGroup[*s] = "comb.icmp.mag";
+      }
+      continue;
+    }
+    model.delayFO4[kv.first] = parseFO4Entry(kv.first, entry);
     }
 }
 
@@ -386,93 +428,217 @@ static FO4Result runFO4Analysis(ModuleOp module, const CostModel &costModel, llv
                               llvm::raw_ostream &err, bool verbose)
 {
   FO4Result result;
-  llvm::DenseMap<Value, double> arrival; // the map is in format <operation, arrival time>
-  std::unordered_map<std::string, unsigned> missingOperationsTable;
 
-  auto getArrival = [&](Value v) -> double
+  llvm::DenseMap<Value, double> arrival;    // Value -> arrival time
+  llvm::DenseMap<Value, Value>  critPred;   // Value -> operand that set its arrival
+  llvm::DenseSet<Operation *>   inProgress; // Operations in DFS stack
+  std::unordered_map<std::string, unsigned> missingOperationsTable;
+  unsigned unloweredReactiveProcesses = 0;
+  unsigned combLoops = 0;
+  unsigned numInstances = 0;
+
+  auto opDelayOf = [&](Operation *op, unsigned& widthOut) -> double
   {
-    auto it = arrival.find(v);
-    if(it != arrival.end())
-      return it->second;
-    return 0.0;
+    llvm::StringRef opName = op->getName().getStringRef();
+    llvm::StringRef lookupName = opName;
+    std::string missingKey = opName.str();
+    widthOut = 0;
+
+    if(auto icmp = dyn_cast<circt::comb::ICmpOp>(op))
+    {
+      std::string predName = circt::comb::stringifyICmpPredicate(icmp.getPredicate()).str();
+      missingKey = "comb.icmp." + predName;   // [JSON] report WHICH predicate is missing (e.g. weq)
+      auto groupIt = costModel.icmpPredicateGroup.find(predName);
+      if(groupIt != costModel.icmpPredicateGroup.end())
+        lookupName = groupIt->second;
+
+      // icmp's result is i1, so cost depends on the OPERAND width
+      if(auto intTy = dyn_cast<IntegerType>(icmp.getLhs().getType()))
+        widthOut = intTy.getWidth();
+    }
+    else if(op->getNumResults() > 0)
+    {
+      if(auto intTy = dyn_cast<IntegerType>(op->getResult(0).getType()))
+        widthOut = intTy.getWidth();
+    }
+
+    auto it = costModel.delayFO4.find(lookupName);
+    if(it == costModel.delayFO4.end())
+    {
+      missingOperationsTable[missingKey]++;   // each op is evaluated once (memoized), so this counts instances
+      return 0.0;
+    }
+
+    const FO4Cost &cost = it->second;
+    double d = evalFO4Cost(cost, widthOut);
+
+    // [JSON] Variadic ops: an N-input op is a tree of ceil(log2(N)) levels of the
+    // 2-input delay in the table. Driven by "scales_with_operands" instead of a hardcoded list.
+    if(cost.scalesWithOperands && op->getNumOperands() > 2)
+      d *= std::ceil(std::log2(static_cast<double>(op->getNumOperands())));
+
+    return d;
   };
 
-  auto recordTimingPath = [&](double delay, llvm::StringRef sinkName)
+  std::function<double(Value)> arrivalOf = [&](Value v) -> double
   {
+    if(auto it = arrival.find(v); it != arrival.end())
+      return it->second;
+
+    Operation *def = v.getDefiningOp();
+
+    // Timing for paths start here:
+    //  - block args: the input ports to modules
+    //  - seq.firreg: register outputs (arrival = clk->Q)
+    //  - hw.instance: submodule outputes
+    //  - llhd.process: unlowered.
+    if(!def || isa<circt::seq::FirRegOp, circt::hw::InstanceOp, circt::llhd::ProcessOp>(def))
+    {
+      double t = isa_and_nonnull<circt::seq::FirRegOp>(def) ? costModel.clkToQFO4 : 0.0;
+      arrival[v] = t;
+      return t;
+    }
+
+    // Combinational loop guard (So we don't recurse forever)
+    if(!inProgress.insert(def).second)
+    {
+      combLoops++;
+      return 0.0;
+    }
+
+    double maxIn = 0.0;
+    Value  pred;
+    for(Value in : def->getOperands())
+    {
+      double a = arrivalOf(in);
+      if(!pred || a > maxIn)
+      {
+        maxIn = a;
+        pred = in;
+      }
+    }
+
+    unsigned width = 0;
+    double t = maxIn + opDelayOf(def, width);
+
+    for (Value res : def->getResults())
+    {
+      arrival[res] = t;
+      if(pred)
+        critPred[res] = pred;
+    }
+
+    inProgress.erase(def);
+
+    if(verbose)
+      out << def->getName() << " (width " << width << "): arrival " << llvm::format("%.2f", t) << " FO4\n";
+
+    return t;
+  };
+
+  // Describing one hop on a path
+  auto describe = [&](Value v) -> std::string
+  {
+    std::string s;
+    llvm::raw_string_ostream os(s);
+    if(Operation *def = v.getDefiningOp())
+    {
+      os << def->getName();
+      if(auto r = dyn_cast<circt::seq::FirRegOp>(def))
+        os << " '" << r.getName() << "'";
+      else if(auto i = dyn_cast<circt::hw::InstanceOp>(def))
+        os << " '" << i.getInstanceName() << "'";
+    }
+    else
+      os << "input port";
+    os << " @ " << llvm::format("%.2f", arrivalOf(v)) << " FO4";
+    return os.str();
+  };
+
+  // Listing out the critical path through an endpoint
+  auto buildPath = [&](Value endpoint) -> std::vector<std::string>
+  {
+    std::vector<std::string> path;
+    Value cur = endpoint;
+    while(cur)
+    {
+      path.push_back(describe(cur));
+      auto it = critPred.find(cur);
+      if(it == critPred.end())
+        break;
+      cur = it->second;
+    }
+    std::reverse(path.begin(), path.end());
+    return path;
+  };
+
+  auto recordTimingPath = [&](Value endpoint, double overhead, llvm::StringRef sinkName)
+  {
+    double delay = arrivalOf(endpoint) + overhead;
     result.numTimingPaths++;
     if(delay > result.criticalFO4)
     {
       result.criticalFO4 = delay;
       result.criticalSinkName = sinkName.str();
+      result.criticalPath = buildPath(endpoint);
     }
+
     if(verbose)
       out << "Path -> " << sinkName << ": " << llvm::format("%.2f", delay) << " FO4\n";
   };
 
   module.walk([&](Operation *op)
   {
-    llvm::StringRef opName = op->getName().getStringRef();
-
     if(auto firreg = dyn_cast<circt::seq::FirRegOp>(op))
     {
-      recordTimingPath(getArrival(firreg.getNext()), firreg.getName());
-      arrival[firreg.getResult()] = 0.0;
+      recordTimingPath(firreg.getNext(), costModel.setupFO4, firreg.getName());
       return;
     }
 
-    if(op->hasTrait<OpTrait::IsTerminator>())
+    if(auto proc = dyn_cast<circt::llhd::ProcessOp>(op))
+    {
+      if(isReactiveLLHDProcess(proc))
+        unloweredReactiveProcesses++;
+      else if(verbose)
+        out << "Note: ignoring non-reactive llhd.process (simulation-only); 0 FO4\n";
+      return;
+    }
+
+    if(auto inst = dyn_cast<circt::hw::InstanceOp>(op))
+    {
+      numInstances++;
+      std::string name = ("instance " + inst.getInstanceName() + " input").str();
+      for(Value operand : inst->getOperands())
+        recordTimingPath(operand, 0.0, name);
+      return;
+    }
+
+    if(isa<circt::hw::OutputOp>(op))
     {
       for(Value operand : op->getOperands())
-        recordTimingPath(getArrival(operand), "output");
+        recordTimingPath(operand, 0.0, "output");
       return;
     }
-
-    if(op->getNumResults() == 0)
-      return;
-
-    llvm::StringRef lookupName = opName;
-    unsigned width = 0;
-    if(auto icmp = dyn_cast<circt::comb::ICmpOp>(op))
-    {
-      std::string predName = circt::comb::stringifyICmpPredicate(icmp.getPredicate()).str();
-      auto groupIt = costModel.icmpPredicateGroup.find(predName);
-      if(groupIt != costModel.icmpPredicateGroup.end())
-        lookupName = groupIt->second;
-
-      if(auto intTy = dyn_cast<IntegerType>(icmp.getLhs().getType()))
-        width = intTy.getWidth();
-    }
-    else if(auto intTy = dyn_cast<IntegerType>(op->getResult(0).getType()))
-    {
-      width = intTy.getWidth();
-    }
-
-    double opDelay{};
-    auto it = costModel.delayFO4.find(lookupName);
-    if(it != costModel.delayFO4.end())
-      opDelay = evalFO4Cost(it->second, width);
-    else
-      missingOperationsTable[opName.str()]++;
-
-    double maxOperandArrival = 0.0;
-    for(Value operand : op->getOperands())
-      maxOperandArrival = std::max(maxOperandArrival, getArrival(operand));
-
-    double thisArrival = maxOperandArrival + opDelay;
-    for(Value res : op->getResults())
-      arrival[res] = thisArrival;
-
-    if(verbose)
-      out << opName << " (width " << width << "): arrival" << llvm::format("%.2f", thisArrival) << " FO4\n";
   });
 
-  for(const auto& [key, value] : missingOperationsTable)
-  {
-    out << "Warning: No FO4 entry for '" << key << "', assuming 0 delay for " << value << " instances\n";
-  }
+  for(const auto &[key, value] : missingOperationsTable)
+    err << "Warning: No FO4 entry for '" << key << "', assuming 0 delay for " << value
+        << " instances (add it to delay_fo4 in the cost model; use { \"fo4\": 0.0 } if it's just wires)\n";
+
+  if(combLoops > 0)
+    err << "WARNING: " << combLoops << " combinational loop(s) detected and cut. "
+        << "Critical path may be wrong.\n";
+
+  if(numInstances > 0)
+    err << "WARNING: " << numInstances << " hw.instance op(s) not analyzed internally. "
+        << "Paths are split at instance boundaries; run --hw-flatten-modules for end-to-end timing.\n";
+
+  if(unloweredReactiveProcesses > 0)
+    err << "WARNING: " << unloweredReactiveProcesses << " unlowered REACTIVE llhd.process op(s) found "
+        << "(contains llhd.wait, meant to react to signal changes). Critical path is likely INCOMPLETE -- "
+        << "run additional LLHD lowering passes before trusting this number.\n";
 
   return result;
-
 }
 
 static void printFO4Report(const FO4Result &r, llvm::raw_ostream &out)
@@ -482,6 +648,13 @@ static void printFO4Report(const FO4Result &r, llvm::raw_ostream &out)
 
   if(!r.criticalSinkName.empty())
     out << " ends at: " << r.criticalSinkName << "\n";
+
+  if(!r.criticalPath.empty())
+  {
+    out << " path:\n";
+    for(const std::string &hop : r.criticalPath)
+      out << "   " << hop << "\n";
+  }
 
   out << "Timing paths checked: " << r.numTimingPaths << "\n";
 }
