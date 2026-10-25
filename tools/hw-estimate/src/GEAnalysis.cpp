@@ -14,6 +14,14 @@
 
 using namespace mlir;
 
+// TODO: Optimizations: let double not delete both nots
+//                      let gates that are fed by nots absorb them.
+static double evalGECost(const GECost &cost, unsigned width)
+{
+  double w = static_cast<double>(width);
+  return cost.gePerBit * w + cost.quadGE * w * w + cost.fixedGE;
+}
+
 GEResult runGEAnalysis(Operation *root, const CostModel &costModel, llvm::raw_ostream &out,
                               llvm::raw_ostream &err, bool verbose)
 {
@@ -101,7 +109,7 @@ GEResult runGEAnalysis(Operation *root, const CostModel &costModel, llvm::raw_os
         width = intTy.getWidth();
     }
 
-    double ge = it->second.gePerBit * width + it->second.fixedGE;
+    double ge = evalGECost(it->second, width);
     result.totalLogicGE += ge;
     if(verbose)
       out << opName << " (width " << width << "): " << llvm::format("%.2f", ge) << " GE\n";

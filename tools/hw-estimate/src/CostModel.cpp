@@ -48,6 +48,8 @@ void loadGECostModel(CostModel& model, llvm::StringRef path)
       cost.gePerBit = *v;
     if(auto v = entry->getNumber("fixed_ge"))
       cost.fixedGE = *v;
+    if(auto v = entry->getNumber("ge_quadratic_k"))
+      cost.quadGE = *v;
 
     model.logicGE[kv.first] = cost;
   }
@@ -78,7 +80,7 @@ static FO4Cost parseFO4Entry(llvm::StringRef name, llvm::json::Object *entry)
 
   if(auto v = entry->getNumber("fo4"))          {cost.fixed = *v; recognized = true;}
   if(auto v = entry->getNumber("fo4_fixed"))    {cost.fixed = *v; recognized = true;}
-  if(auto v = entry->getNumber("fo4_per_bit"))  {cost.fixed = *v; recognized = true;}
+  if(auto v = entry->getNumber("fo4_per_bit"))  {cost.perBit = *v; recognized = true;}
 
   if(auto v = entry->getNumber("fo4_log2_coeff"))
   {
@@ -87,7 +89,7 @@ static FO4Cost parseFO4Entry(llvm::StringRef name, llvm::json::Object *entry)
     recognized = true;
   }
 
-  if(auto v = entry->getNumber("fo4_log2_const")) {cost.fixed = *v; recognized = true;}
+  if(auto v = entry->getNumber("fo4_log2_const")) {cost.log2Const = *v; recognized = true;}
 
   // TODO: implement scales_with_operands from json.
 
