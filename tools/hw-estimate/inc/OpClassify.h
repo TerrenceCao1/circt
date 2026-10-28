@@ -7,7 +7,11 @@
 
 #include <cstdint>
 #include "mlir/IR/Types.h"
+#include "mlir/IR/Value.h"
 #include "circt/Dialect/LLHD/LLHDOps.h"
+#include "mlir/IR/BuiltinTypes.h"
+
+using namespace mlir;
 
 /**
  * @brief Counts the total number of bits in a type.
@@ -19,14 +23,14 @@
  * @param[in] type Type to measure.
  * @return Total bit count, or 0 for an unrecognized type.
  */
-uint64_t getTotalBits(mlir::Type type);
+uint64_t getTotalBits(Type type);
 
 /**
  * @brief Tells whether an `llhd.process` is reactive.
  *
  * A process is reactive if its body contains an `llhd.wait`, meaning it is
  * meant to respond to signal changes and has not been lowered to plain logic.
- * Non-reactive processes (for example `initial` blocks) are simulation-only.
+* Non-reactive processes (for example `initial` blocks) are simulation-only.
  *
  * @param[in] proc Process to inspect.
  * @return True if the body contains at least one `llhd.wait`.
@@ -44,4 +48,37 @@ bool isReactiveLLHDProcess(circt::llhd::ProcessOp proc);
  * @param[in] op Operation to check.
  * @return True if the operation is: an XorOp, has two operands, as one input tied to 1.
  */
-bool isNotOp(mlir::Operation *op);
+bool isNotOp(Operation *op);
+
+
+/**
+ * @brief Returns the non-constant operand of the NOT
+ *
+ * CIRCT encodes NOT gates as XOR gates with one input tied high. This helper function returns
+ * the Value of the relevant operand.
+ *
+ * @param[in] op Parent operation.
+ * @return Value of the relavant operand.
+ */
+Value getNotOperand(Operation *op);
+
+
+/**
+ * @brief Checks that this Operation is the outer not (the second NOT in a double NOT sequence).
+ *
+ * Checks if op is a NOT gate which has a NOT in front of it  
+ *
+ * @param[in] op Parent operation.
+ * @return True if op is the outer gate of the double NOT.
+ */
+bool isDoubleInvOuter(Operation *op);
+
+/**
+ * @brief Checks that this op should be absorbed (if it feeds a single-use, 2 input gate, or if its a double not).
+ *
+ * Checks if op should be absorbed and thus not counted in GE or FO4.
+ *
+ * @param[in] op Operation checked.
+ * @return True if op should be ignored, false otherwise.
+ */
+bool isAbsorbedNot(Operation *op);

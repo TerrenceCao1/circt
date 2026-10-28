@@ -31,6 +31,7 @@ FO4Result runFO4Analysis(Operation *root, const CostModel &costModel, llvm::raw_
   unsigned unloweredReactiveProcesses = 0;
   unsigned combLoops = 0;
   unsigned numInstances = 0;
+  unsigned absorbedNots = 0;
 
   auto opDelayOf = [&](Operation *op, unsigned& widthOut) -> double
   {
@@ -55,6 +56,12 @@ FO4Result runFO4Analysis(Operation *root, const CostModel &costModel, llvm::raw_
     {
       if(auto intTy = dyn_cast<IntegerType>(op->getResult(0).getType()))
         widthOut = intTy.getWidth();
+    }
+
+    if(isAbsorbedNot(op))
+    {
+      absorbedNots++;
+      return 0.0;
     }
 
     if(isNotOp(op) && costModel.delayFO4.count("comb.not"))
@@ -105,6 +112,20 @@ FO4Result runFO4Analysis(Operation *root, const CostModel &costModel, llvm::raw_
     {
       combLoops++;
       return 0.0;
+    }
+
+    if(isDoubleInvOuter(def))
+    {
+      Value base = getNotOperand(getNotOperand(def).getDefiningOp());
+      double t = arrivalOf(base);
+
+      arrival[v] = t;
+      critPred[v] = base;
+
+      absorbedNots++;
+      inProgress.erase(def);
+
+      return t;
     }
 
     double maxIn = 0.0;
@@ -222,6 +243,8 @@ FO4Result runFO4Analysis(Operation *root, const CostModel &costModel, llvm::raw_
     }
   });
 
+  if(verbose && absorbedNots > 0)
+    out << "Note: " << absorbedNots << " NOT op(s) absorbed (double inversion or folded into other gates).";
   for(const auto &[key, value] : missingOperationsTable)
     if(warn)
       err << "Warning: No FO4 entry for '" << key << "', assuming 0 delay for " << value

@@ -20,7 +20,7 @@
     "hw.bitcast":             { "ge_per_bit": 0.0, "fixed_ge": 0 },
     "hw.array_create":        { "ge_per_bit": 0.0, "fixed_ge": 0 },
     "hw.struct_extract":      { "ge_per_bit": 0.0, "fixed_ge": 0 },
-    "comb.not":     { "ge_per_bit": 0.0, "fixed_ge": 0, "scales_with_operands": true }
+    "comb.not":     { "ge_per_bit": 0.67, "fixed_ge": 0, "scales_with_operands": true }
 
   },
   "delay_fo4": {

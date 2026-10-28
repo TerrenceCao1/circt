@@ -31,6 +31,7 @@ struct GECost
 {
   double gePerBit{};  ///< GE added per bit of result width.
   double fixedGE{};   ///< GE added per instance, independent of width.
+  double quadGE{};    ///< GE that scales quadratically (mult/div)
 };
 
 /**

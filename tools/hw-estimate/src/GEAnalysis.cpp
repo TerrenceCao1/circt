@@ -14,8 +14,6 @@
 
 using namespace mlir;
 
-// TODO: Optimizations: let double not delete both nots
-//                      let gates that are fed by nots absorb them.
 static double evalGECost(const GECost &cost, unsigned width)
 {
   double w = static_cast<double>(width);
@@ -28,6 +26,7 @@ GEResult runGEAnalysis(Operation *root, const CostModel &costModel, llvm::raw_os
   GEResult result;
   std::unordered_map<std::string, unsigned> missingOperationsTable;
   unsigned unloweredReactiveProcesses = 0;
+  unsigned absorbedNots = 0;
 
   root->walk([&](Operation *op)
   {
@@ -92,6 +91,14 @@ GEResult runGEAnalysis(Operation *root, const CostModel &costModel, llvm::raw_os
       return;
     }
 
+    if(isAbsorbedNot(op))
+    {
+      absorbedNots++;
+      if(verbose)
+        out << "comb.net absorbed: 0.00 GE\n";
+      return;
+    }
+
 
     // Missing Operations
     auto it = costModel.logicGE.find(opName);
@@ -126,6 +133,9 @@ GEResult runGEAnalysis(Operation *root, const CostModel &costModel, llvm::raw_os
     out << "WARNING: " << unloweredReactiveProcesses << " unlowered REACTIVE llhd.process op(s) found "
         << "(contains llhd.wait, meant to react to signal changes). Logic GE is likely INCOMPLETE -- "
         << "run additional LLHD lowering passes before trusting this total.\n";
+ if(verbose && absorbedNots > 0)
+   out << "Note: " << absorbedNots << " NOT op(s) absorbed; 0 GE\n";
+
 
   result.totalFFGE = result.totalFFBits * costModel.ffGEPerBit;
   result.totalSramGE = result.totalSramBits * costModel.sramGEPerBit + result.totalSramMacros * costModel.sramFixedGE;
