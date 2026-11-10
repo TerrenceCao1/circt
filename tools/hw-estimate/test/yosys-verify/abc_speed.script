@@ -1,0 +1,10 @@
+strash
+&get -n
+&nf
+&put
+buffer -c
+topo
+stime -c
+upsize -c
+dnsize -c
+stime -p

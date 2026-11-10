@@ -1,0 +1,138 @@
+
+5. Executing ABC pass (technology mapping using ABC).
+
+5.1. Extracting gate netlist of module `\top' to `<abc-temp-dir>/input.blif'..
+ABC: using cached merged SCL: /tmp/yosys-liberty-scl-cache/yosys_merged_2dbf527a.scl (1 files)
+
+5.1.1. Executed ABC.
+Extracted 13368 gates and 13432 wires to a netlist network with 64 inputs and 126 outputs.
+Running ABC script: <abc-temp-dir>/abc.script
+ABC: ======== ABC command line "source <abc-temp-dir>/abc.script"
+ABC: + read_blif <abc-temp-dir>/input.blif 
+ABC: + read_scl /tmp/yosys-liberty-scl-cache/yosys_merged_2dbf527a.scl 
+ABC: Warning: Detected 2 multi-output cells (for example, "FA_X1").
+ABC: + read_constr -v /home/tzcao/dev/circt/tools/hw-estimate/test/yosys-verify/out_dir/abc.constr 
+ABC: Setting driving cell to be "BUF_X1".
+ABC: Setting output load to be 0.000000.
+ABC: + source /home/tzcao/dev/circt/tools/hw-estimate/test/yosys-verify/abc_area.script 
+ABC: WireLoad = "none"  Gates =  11127 (  7.3 %)   Cap =  3.9 ff (  0.0 %)   Area =    12519.02 (100.0 %)   Delay =  6377.79 ps  (  1.0 %)               
+ABC: Path  0 --      63 : 0  102 pi        A =   0.00  Df = 390.8 -207.8 ps  S = 373.0 ps  Cin =  0.0 ff  Cout = 162.2 ff  Cmax =   0.0 ff  G =    0  
+ABC: Path  1 --    9221 : 4    3 AOI22_X1  A =   1.33  Df = 444.8 -161.3 ps  S =  81.3 ps  Cin =  1.6 ff  Cout =   4.1 ff  Cmax =  24.6 ff  G =  255  
+ABC: Path  2 --    9223 : 4    3 OR4_X1    A =   1.60  Df = 587.6  -59.7 ps  S =  21.2 ps  Cin =  0.9 ff  Cout =   4.8 ff  Cmax =  60.6 ff  G =  537  
+ABC: Path  3 --    9227 : 5    4 AOI221_X1 A =   1.60  Df = 703.2 -143.1 ps  S =  71.9 ps  Cin =  1.6 ff  Cout =   5.9 ff  Cmax =  13.8 ff  G =  359  
+ABC: Path  4 --    9265 : 6    3 OAI33_X1  A =   1.86  Df = 884.0  -79.4 ps  S =  86.7 ps  Cin =  1.5 ff  Cout =   5.5 ff  Cmax =  11.5 ff  G =  341  
+ABC: Path  5 --    9267 : 4    2 AOI211_X1 A =   1.33  Df = 913.1  -50.8 ps  S =  48.0 ps  Cin =  1.6 ff  Cout =   3.2 ff  Cmax =  14.5 ff  G =  204  
+ABC: Path  6 --    9268 : 6    3 OAI33_X1  A =   1.86  Df =1030.2 -121.8 ps  S =  86.1 ps  Cin =  1.5 ff  Cout =   5.5 ff  Cmax =  11.5 ff  G =  344  
+ABC: Path  7 --    9270 : 5    2 AOI221_X1 A =   1.60  Df =1074.6  -79.1 ps  S =  52.6 ps  Cin =  1.6 ff  Cout =   3.2 ff  Cmax =  13.8 ff  G =  202  
+ABC: Path  8 --    9271 : 6    3 OAI33_X1  A =   1.86  Df =1194.3 -152.1 ps  S =  86.7 ps  Cin =  1.5 ff  Cout =   5.5 ff  Cmax =  11.5 ff  G =  341  
+ABC: Path  9 --    9273 : 4    2 AOI211_X1 A =   1.33  Df =1223.4 -126.3 ps  S =  48.0 ps  Cin =  1.6 ff  Cout =   3.2 ff  Cmax =  14.5 ff  G =  204  
+ABC: Path 10 --    9274 : 6    3 OAI33_X1  A =   1.86  Df =1341.1 -198.2 ps  S =  86.7 ps  Cin =  1.5 ff  Cout =   5.5 ff  Cmax =  11.5 ff  G =  341  
+ABC: Path 11 --    9276 : 4    2 AOI211_X1 A =   1.33  Df =1367.2 -175.1 ps  S =  42.9 ps  Cin =  1.6 ff  Cout =   2.5 ff  Cmax =  14.5 ff  G =  160  
+ABC: Path 12 --    9277 : 6    3 OAI33_X1  A =   1.86  Df =1484.4 -247.9 ps  S =  86.7 ps  Cin =  1.5 ff  Cout =   5.5 ff  Cmax =  11.5 ff  G =  339  
+ABC: Path 13 --    9279 : 4    2 AOI211_X1 A =   1.33  Df =1513.6 -222.2 ps  S =  48.0 ps  Cin =  1.6 ff  Cout =   3.2 ff  Cmax =  14.5 ff  G =  204  
+ABC: Path 14 --    9280 : 6    3 OAI33_X1  A =   1.86  Df =1630.8 -293.7 ps  S =  86.4 ps  Cin =  1.5 ff  Cout =   5.5 ff  Cmax =  11.5 ff  G =  341  
+ABC: Path 15 --    9283 : 4    2 OAI211_X1 A =   1.33  Df =1665.7 -288.8 ps  S =  27.8 ps  Cin =  1.6 ff  Cout =   2.6 ff  Cmax =  25.6 ff  G =  161  
+ABC: Path 16 --    9284 : 3    2 AND3_X1   A =   1.33  Df =1713.4 -285.1 ps  S =  13.6 ps  Cin =  0.9 ff  Cout =   3.2 ff  Cmax =  60.4 ff  G =  352  
+ABC: Path 17 --    9285 : 6    3 OAI33_X1  A =   1.86  Df =1824.8 -361.2 ps  S =  86.7 ps  Cin =  1.5 ff  Cout =   5.5 ff  Cmax =  11.5 ff  G =  341  
+ABC: Path 18 --    9287 : 4    2 AOI211_X1 A =   1.33  Df =1853.9 -335.6 ps  S =  48.0 ps  Cin =  1.6 ff  Cout =   3.2 ff  Cmax =  14.5 ff  G =  204  
+ABC: Path 19 --    9288 : 6    3 OAI33_X1  A =   1.86  Df =1971.5 -407.5 ps  S =  86.7 ps  Cin =  1.5 ff  Cout =   5.5 ff  Cmax =  11.5 ff  G =  341  
+ABC: Path 20 --    9290 : 4    2 AOI211_X1 A =   1.33  Df =1997.6 -384.4 ps  S =  42.9 ps  Cin =  1.6 ff  Cout =   2.5 ff  Cmax =  14.5 ff  G =  160  
+ABC: Path 21 --    9291 : 6    3 OAI33_X1  A =   1.86  Df =2114.9 -457.2 ps  S =  86.7 ps  Cin =  1.5 ff  Cout =   5.5 ff  Cmax =  11.5 ff  G =  339  
+ABC: Path 22 --    9293 : 4    2 AOI211_X1 A =   1.33  Df =2144.0 -432.0 ps  S =  48.0 ps  Cin =  1.6 ff  Cout =   3.2 ff  Cmax =  14.5 ff  G =  204  
+ABC: Path 23 --    9294 : 6    3 OAI33_X1  A =   1.86  Df =2261.6 -503.9 ps  S =  86.7 ps  Cin =  1.5 ff  Cout =   5.5 ff  Cmax =  11.5 ff  G =  341  
+ABC: Path 24 --    9296 : 4    2 AOI211_X1 A =   1.33  Df =2287.8 -480.9 ps  S =  42.9 ps  Cin =  1.6 ff  Cout =   2.5 ff  Cmax =  14.5 ff  G =  160  
+ABC: Path 25 --    9297 : 6    3 OAI33_X1  A =   1.86  Df =2405.0 -553.8 ps  S =  86.7 ps  Cin =  1.5 ff  Cout =   5.5 ff  Cmax =  11.5 ff  G =  339  
+ABC: Path 26 --    9299 : 4    2 AOI211_X1 A =   1.33  Df =2434.1 -528.2 ps  S =  48.0 ps  Cin =  1.6 ff  Cout =   3.2 ff  Cmax =  14.5 ff  G =  204  
+ABC: Path 27 --    9300 : 6    3 OAI33_X1  A =   1.86  Df =2551.8 -600.1 ps  S =  86.7 ps  Cin =  1.5 ff  Cout =   5.5 ff  Cmax =  11.5 ff  G =  341  
+ABC: Path 28 --    9302 : 4    2 AOI211_X1 A =   1.33  Df =2580.9 -574.4 ps  S =  48.0 ps  Cin =  1.6 ff  Cout =   3.2 ff  Cmax =  14.5 ff  G =  204  
+ABC: Path 29 --    9303 : 6    3 OAI33_X1  A =   1.86  Df =2698.5 -646.5 ps  S =  86.7 ps  Cin =  1.5 ff  Cout =   5.5 ff  Cmax =  11.5 ff  G =  339  
+ABC: Path 30 --    9306 : 4    2 AOI211_X1 A =   1.33  Df =2727.7 -620.9 ps  S =  48.0 ps  Cin =  1.6 ff  Cout =   3.2 ff  Cmax =  14.5 ff  G =  204  
+ABC: Path 31 --    9307 : 6    3 OAI33_X1  A =   1.86  Df =2845.3 -693.0 ps  S =  86.7 ps  Cin =  1.5 ff  Cout =   5.5 ff  Cmax =  11.5 ff  G =  339  
+ABC: Path 32 --    9310 : 4    2 AOI211_X1 A =   1.33  Df =2874.4 -667.5 ps  S =  48.0 ps  Cin =  1.6 ff  Cout =   3.2 ff  Cmax =  14.5 ff  G =  204  
+ABC: Path 33 --    9311 : 6    3 OAI33_X1  A =   1.86  Df =2991.7 -738.8 ps  S =  86.4 ps  Cin =  1.5 ff  Cout =   5.5 ff  Cmax =  11.5 ff  G =  343  
+ABC: Path 34 --    9313 : 4    2 OAI211_X1 A =   1.33  Df =3023.2 -734.2 ps  S =  26.3 ps  Cin =  1.6 ff  Cout =   1.9 ff  Cmax =  25.6 ff  G =  119  
+ABC: Path 35 --    9314 : 3    2 AND3_X1   A =   1.33  Df =3070.1 -730.2 ps  S =  13.6 ps  Cin =  0.9 ff  Cout =   3.2 ff  Cmax =  60.4 ff  G =  352  
+ABC: Path 36 --    9315 : 6    3 OAI33_X1  A =   1.86  Df =3181.5 -806.5 ps  S =  86.7 ps  Cin =  1.5 ff  Cout =   5.5 ff  Cmax =  11.5 ff  G =  339  
+ABC: Path 37 --    9318 : 4    2 AOI211_X1 A =   1.33  Df =3210.7 -780.9 ps  S =  48.0 ps  Cin =  1.6 ff  Cout =   3.2 ff  Cmax =  14.5 ff  G =  204  
+ABC: Path 38 --    9319 : 6    3 OAI33_X1  A =   1.86  Df =3328.4 -852.8 ps  S =  86.8 ps  Cin =  1.5 ff  Cout =   5.6 ff  Cmax =  11.5 ff  G =  343  
+ABC: Path 39 --    9321 : 4    2 AOI211_X1 A =   1.33  Df =3357.6 -827.1 ps  S =  48.0 ps  Cin =  1.6 ff  Cout =   3.2 ff  Cmax =  14.5 ff  G =  204  
+ABC: Path 40 --    9322 : 6    3 OAI33_X1  A =   1.86  Df =3474.9 -898.7 ps  S =  86.4 ps  Cin =  1.5 ff  Cout =   5.5 ff  Cmax =  11.5 ff  G =  340  
+ABC: Path 41 --    9324 : 4    2 OAI211_X1 A =   1.33  Df =3509.7 -894.0 ps  S =  27.8 ps  Cin =  1.6 ff  Cout =   2.6 ff  Cmax =  25.6 ff  G =  161  
+ABC: Path 42 --    9325 : 3    2 AND3_X1   A =   1.33  Df =3557.4 -890.3 ps  S =  13.6 ps  Cin =  0.9 ff  Cout =   3.2 ff  Cmax =  60.4 ff  G =  352  
+ABC: Path 43 --    9326 : 6    3 OAI33_X1  A =   1.86  Df =3668.8 -966.4 ps  S =  86.7 ps  Cin =  1.5 ff  Cout =   5.5 ff  Cmax =  11.5 ff  G =  341  
+ABC: Path 44 --    9328 : 4    2 AOI211_X1 A =   1.33  Df =3697.9 -940.8 ps  S =  48.0 ps  Cin =  1.6 ff  Cout =   3.2 ff  Cmax =  14.5 ff  G =  204  
+ABC: Path 45 --    9329 : 6    3 OAI33_X1  A =   1.86  Df =3815.6-1012.8 ps  S =  86.7 ps  Cin =  1.5 ff  Cout =   5.5 ff  Cmax =  11.5 ff  G =  339  
+ABC: Path 46 --    9332 : 4    2 AOI211_X1 A =   1.33  Df =3844.7 -987.4 ps  S =  48.0 ps  Cin =  1.6 ff  Cout =   3.2 ff  Cmax =  14.5 ff  G =  204  
+ABC: Path 47 --    9333 : 6    3 OAI33_X1  A =   1.86  Df =3962.3-1059.4 ps  S =  86.7 ps  Cin =  1.5 ff  Cout =   5.5 ff  Cmax =  11.5 ff  G =  339  
+ABC: Path 48 --    9336 : 4    2 AOI211_X1 A =   1.33  Df =3991.5-1033.9 ps  S =  48.0 ps  Cin =  1.6 ff  Cout =   3.2 ff  Cmax =  14.5 ff  G =  204  
+ABC: Path 49 --    9337 : 6    3 OAI33_X1  A =   1.86  Df =4108.5-1104.9 ps  S =  86.1 ps  Cin =  1.5 ff  Cout =   5.5 ff  Cmax =  11.5 ff  G =  344  
+ABC: Path 50 --    9339 : 5    2 AOI221_X1 A =   1.60  Df =4153.0-1062.3 ps  S =  52.6 ps  Cin =  1.6 ff  Cout =   3.2 ff  Cmax =  13.8 ff  G =  202  
+ABC: Path 51 --    9340 : 6    3 OAI33_X1  A =   1.86  Df =4272.6-1135.2 ps  S =  86.7 ps  Cin =  1.5 ff  Cout =   5.5 ff  Cmax =  11.5 ff  G =  341  
+ABC: Path 52 --    9342 : 4    2 AOI211_X1 A =   1.33  Df =4301.8-1109.5 ps  S =  48.0 ps  Cin =  1.6 ff  Cout =   3.2 ff  Cmax =  14.5 ff  G =  204  
+ABC: Path 53 --    9343 : 6    3 OAI33_X1  A =   1.86  Df =4419.4-1181.4 ps  S =  86.7 ps  Cin =  1.5 ff  Cout =   5.5 ff  Cmax =  11.5 ff  G =  341  
+ABC: Path 54 --    9345 : 4    2 AOI211_X1 A =   1.33  Df =4448.5-1155.7 ps  S =  48.0 ps  Cin =  1.6 ff  Cout =   3.2 ff  Cmax =  14.5 ff  G =  204  
+ABC: Path 55 --    9346 : 6    3 OAI33_X1  A =   1.86  Df =4566.2-1227.7 ps  S =  86.7 ps  Cin =  1.5 ff  Cout =   5.5 ff  Cmax =  11.5 ff  G =  341  
+ABC: Path 56 --    9348 : 4    2 AOI211_X1 A =   1.33  Df =4595.3-1202.0 ps  S =  48.0 ps  Cin =  1.6 ff  Cout =   3.2 ff  Cmax =  14.5 ff  G =  204  
+ABC: Path 57 --    9349 : 6    3 OAI33_X1  A =   1.86  Df =4712.9-1273.9 ps  S =  86.7 ps  Cin =  1.5 ff  Cout =   5.5 ff  Cmax =  11.5 ff  G =  341  
+ABC: Path 58 --    9351 : 4    2 AOI211_X1 A =   1.33  Df =4742.1-1248.4 ps  S =  48.0 ps  Cin =  1.6 ff  Cout =   3.2 ff  Cmax =  14.5 ff  G =  204  
+ABC: Path 59 --    9352 : 6    3 OAI33_X1  A =   1.86  Df =4859.7-1320.5 ps  S =  86.7 ps  Cin =  1.5 ff  Cout =   5.5 ff  Cmax =  11.5 ff  G =  339  
+ABC: Path 60 --   10698 : 4    2 AOI211_X1 A =   1.33  Df =4888.5-1294.3 ps  S =  48.2 ps  Cin =  1.6 ff  Cout =   3.3 ff  Cmax =  14.5 ff  G =  202  
+ABC: Path 61 --   10699 : 6    3 OAI33_X1  A =   1.86  Df =5001.8-1363.5 ps  S =  86.4 ps  Cin =  1.5 ff  Cout =   5.5 ff  Cmax =  11.5 ff  G =  340  
+ABC: Path 62 --   10701 : 4    2 OAI211_X1 A =   1.33  Df =5036.6-1358.7 ps  S =  27.8 ps  Cin =  1.6 ff  Cout =   2.6 ff  Cmax =  25.6 ff  G =  161  
+ABC: Path 63 --   10702 : 3    2 AND3_X1   A =   1.33  Df =5083.0-1355.9 ps  S =  12.1 ps  Cin =  0.9 ff  Cout =   2.5 ff  Cmax =  60.4 ff  G =  275  
+ABC: Path 64 --   10703 : 6    3 OAI33_X1  A =   1.86  Df =5194.1-1432.3 ps  S =  86.7 ps  Cin =  1.5 ff  Cout =   5.5 ff  Cmax =  11.5 ff  G =  341  
+ABC: Path 65 --   10705 : 4    2 AOI211_X1 A =   1.33  Df =5223.3-1406.6 ps  S =  48.0 ps  Cin =  1.6 ff  Cout =   3.2 ff  Cmax =  14.5 ff  G =  204  
+ABC: Path 66 --   10706 : 6    3 OAI33_X1  A =   1.86  Df =5340.5-1478.2 ps  S =  86.4 ps  Cin =  1.5 ff  Cout =   5.5 ff  Cmax =  11.5 ff  G =  340  
+ABC: Path 67 --   10708 : 4    2 OAI211_X1 A =   1.33  Df =5372.0-1473.6 ps  S =  26.3 ps  Cin =  1.6 ff  Cout =   1.9 ff  Cmax =  25.6 ff  G =  119  
+ABC: Path 68 --   10709 : 3    2 AND3_X1   A =   1.33  Df =5418.9-1469.7 ps  S =  13.6 ps  Cin =  0.9 ff  Cout =   3.2 ff  Cmax =  60.4 ff  G =  352  
+ABC: Path 69 --   10710 : 6    3 OAI33_X1  A =   1.86  Df =5530.3-1545.9 ps  S =  86.7 ps  Cin =  1.5 ff  Cout =   5.5 ff  Cmax =  11.5 ff  G =  339  
+ABC: Path 70 --   10713 : 4    2 AOI211_X1 A =   1.33  Df =5559.5-1520.3 ps  S =  48.0 ps  Cin =  1.6 ff  Cout =   3.2 ff  Cmax =  14.5 ff  G =  204  
+ABC: Path 71 --   10714 : 6    2 OAI33_X1  A =   1.86  Df =5664.1-1582.7 ps  S =  73.9 ps  Cin =  1.5 ff  Cout =   3.9 ff  Cmax =  11.5 ff  G =  243  
+ABC: Path 72 --   10716 : 3    3 OAI21_X1  A =   1.06  Df =5699.0-1566.9 ps  S =  36.2 ps  Cin =  1.6 ff  Cout =   5.5 ff  Cmax =  26.1 ff  G =  335  
+ABC: Path 73 --   10718 : 4    2 AOI211_X1 A =   1.33  Df =5755.5-1598.0 ps  S =  48.0 ps  Cin =  1.6 ff  Cout =   3.2 ff  Cmax =  14.5 ff  G =  204  
+ABC: Path 74 --   10719 : 6    3 OAI33_X1  A =   1.86  Df =5801.0-1529.3 ps  S =  86.7 ps  Cin =  1.5 ff  Cout =   5.5 ff  Cmax =  11.5 ff  G =  339  
+ABC: Path 75 --   10911 : 4    2 AOI211_X1 A =   1.33  Df =5850.3-1552.8 ps  S =  43.1 ps  Cin =  1.6 ff  Cout =   2.6 ff  Cmax =  14.5 ff  G =  158  
+ABC: Path 76 --   10912 : 6    3 OAI33_X1  A =   1.86  Df =5893.3-1483.0 ps  S =  86.3 ps  Cin =  1.5 ff  Cout =   5.5 ff  Cmax =  11.5 ff  G =  341  
+ABC: Path 77 --   10914 : 4    2 OAI211_X1 A =   1.33  Df =5936.0-1487.9 ps  S =  29.1 ps  Cin =  1.6 ff  Cout =   3.3 ff  Cmax =  25.6 ff  G =  201  
+ABC: Path 78 --   10915 : 3    2 AOI21_X1  A =   1.06  Df =5958.5-1462.4 ps  S =  29.4 ps  Cin =  1.6 ff  Cout =   3.2 ff  Cmax =  25.3 ff  G =  203  
+ABC: Path 79 --   10916 : 6    3 OAI33_X1  A =   1.86  Df =6072.3-1535.8 ps  S =  86.7 ps  Cin =  1.5 ff  Cout =   5.5 ff  Cmax =  11.5 ff  G =  341  
+ABC: Path 80 --   10918 : 4    2 AOI211_X1 A =   1.33  Df =6098.4-1512.9 ps  S =  42.9 ps  Cin =  1.6 ff  Cout =   2.5 ff  Cmax =  14.5 ff  G =  160  
+ABC: Path 81 --   10975 : 6    3 OAI33_X1  A =   1.86  Df =6215.2-1585.1 ps  S =  86.4 ps  Cin =  1.5 ff  Cout =   5.5 ff  Cmax =  11.5 ff  G =  341  
+ABC: Path 82 --   10977 : 4    1 OAI211_X1 A =   1.33  Df =6241.4-1580.1 ps  S =  24.0 ps  Cin =  1.6 ff  Cout =   1.0 ff  Cmax =  25.6 ff  G =   60  
+ABC: Path 83 --   10978 : 2    3 AND2_X1   A =   1.06  Df =6286.0-1580.4 ps  S =  16.5 ps  Cin =  0.9 ff  Cout =   5.5 ff  Cmax =  60.6 ff  G =  577  
+ABC: Path 84 --   10980 : 4    2 OAI211_X1 A =   1.33  Df =6325.2-1593.8 ps  S =  29.3 ps  Cin =  1.6 ff  Cout =   3.6 ff  Cmax =  25.6 ff  G =  221  
+ABC: Path 85 --   10981 : 3    1 MUX2_X1   A =   1.86  Df =6377.8-1591.4 ps  S =   8.0 ps  Cin =  1.2 ff  Cout =   0.0 ff  Cmax =  60.5 ff  G =    0  
+ABC: Start-point = pi62 (\a[1]).  End-point = po12 (\asquared[126]).
+ABC: + write_blif <abc-temp-dir>/output.blif 
+
+5.1.2. Re-integrating ABC results.
+ABC RESULTS:           AND2_X1 cells:      473
+ABC RESULTS:           AND3_X1 cells:      139
+ABC RESULTS:           AND4_X1 cells:       22
+ABC RESULTS:         AOI211_X1 cells:       44
+ABC RESULTS:          AOI21_X1 cells:     1031
+ABC RESULTS:         AOI221_X1 cells:        4
+ABC RESULTS:          AOI22_X1 cells:      617
+ABC RESULTS:            INV_X1 cells:      808
+ABC RESULTS:           MUX2_X1 cells:        2
+ABC RESULTS:          NAND2_X1 cells:     1659
+ABC RESULTS:          NAND3_X1 cells:      150
+ABC RESULTS:          NAND4_X1 cells:       45
+ABC RESULTS:           NOR2_X1 cells:     1421
+ABC RESULTS:           NOR3_X1 cells:      129
+ABC RESULTS:           NOR4_X1 cells:        9
+ABC RESULTS:         OAI211_X1 cells:       66
+ABC RESULTS:          OAI21_X1 cells:      842
+ABC RESULTS:         OAI221_X1 cells:       57
+ABC RESULTS:          OAI22_X1 cells:      279
+ABC RESULTS:          OAI33_X1 cells:       63
+ABC RESULTS:            OR2_X1 cells:      348
+ABC RESULTS:            OR3_X1 cells:      146
+ABC RESULTS:            OR4_X1 cells:        2
+ABC RESULTS:          XNOR2_X1 cells:     1672
+ABC RESULTS:           XOR2_X1 cells:     1099
+ABC RESULTS:        internal signals:    13242
+ABC RESULTS:           input signals:       64
+ABC RESULTS:          output signals:      126
+Removing temp directory.
+Removing global temp directory.

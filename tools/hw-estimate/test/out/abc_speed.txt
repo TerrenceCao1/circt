@@ -1,0 +1,108 @@
+
+5. Executing ABC pass (technology mapping using ABC).
+
+5.1. Extracting gate netlist of module `\picorv32' to `<abc-temp-dir>/input.blif'..
+ABC: using cached merged SCL: /tmp/yosys-liberty-scl-cache/yosys_merged_6feb00bc.scl (1 files)
+Replacing 64 occurrences of constant undef bits with constant zero bits
+
+5.1.1. Executed ABC.
+Extracted 9292 gates and 10902 wires to a netlist network with 1607 inputs and 1625 outputs.
+Running ABC script: <abc-temp-dir>/abc.script
+ABC: ======== ABC command line "source <abc-temp-dir>/abc.script"
+ABC: + read_blif <abc-temp-dir>/input.blif 
+ABC: + read_scl /tmp/yosys-liberty-scl-cache/yosys_merged_6feb00bc.scl 
+ABC: Warning: Detected 2 multi-output cells (for example, "FA_X1").
+ABC: + read_constr -v /home/tzcao/dev/circt/tools/hw-estimate/test/out/abc.constr 
+ABC: Setting driving cell to be "BUF_X1".
+ABC: Setting output load to be 0.000000.
+ABC: + source /home/tzcao/dev/circt/tools/hw-estimate/test/yosys-verify/abc_speed.script 
+ABC: WireLoad = "5K_hvratio_1_1"  Gates =   8164 ( 17.2 %)   Cap =  4.2 ff (  6.6 %)   Area =    11017.99 ( 86.4 %)   Delay =  2142.66 ps  (  0.6 %)               
+ABC: WireLoad = "none"  Gates =   8164 ( 17.2 %)   Cap =  3.1 ff (  1.8 %)   Area =    10110.93 ( 88.3 %)   Delay =  1577.54 ps  (  1.1 %)               
+ABC: Path  0 --     108 : 0    1 pi       A =   0.00  Df =   9.0   -2.8 ps  S =  10.7 ps  Cin =  0.0 ff  Cout =   3.4 ff  Cmax =   0.0 ff  G =    0  
+ABC: Path  1 --    4565 : 1    5 BUF_X4   A =   1.86  Df =  33.0   -1.6 ps  S =   9.3 ps  Cin =  3.2 ff  Cout =  10.7 ff  Cmax = 242.3 ff  G =  319  
+ABC: Path  2 --    6245 : 4    3 AND4_X4  A =   3.46  Df =  85.7  -21.1 ps  S =  12.0 ps  Cin =  3.3 ff  Cout =   7.3 ff  Cmax = 241.1 ff  G =  212  
+ABC: Path  3 --    6246 : 4    3 AND4_X4  A =   3.46  Df = 139.8  -40.0 ps  S =  12.0 ps  Cin =  3.3 ff  Cout =   7.3 ff  Cmax = 241.1 ff  G =  212  
+ABC: Path  4 --    6247 : 4    3 AND4_X4  A =   3.46  Df = 195.9  -59.7 ps  S =  13.3 ps  Cin =  3.3 ff  Cout =   9.6 ff  Cmax = 241.1 ff  G =  278  
+ABC: Path  5 --    6248 : 4    3 NAND4_X4 A =   4.79  Df = 228.7  -69.1 ps  S =  17.0 ps  Cin =  5.7 ff  Cout =   7.8 ff  Cmax = 222.8 ff  G =  133  
+ABC: Path  6 --    6249 : 4    3 OR4_X4   A =   3.46  Df = 339.4 -149.9 ps  S =  16.4 ps  Cin =  3.3 ff  Cout =   7.8 ff  Cmax = 241.7 ff  G =  234  
+ABC: Path  7 --    6250 : 4    3 OR4_X4   A =   3.46  Df = 449.8 -233.7 ps  S =  16.4 ps  Cin =  3.3 ff  Cout =   7.8 ff  Cmax = 241.7 ff  G =  234  
+ABC: Path  8 --    6251 : 4    3 OR4_X4   A =   3.46  Df = 560.3 -317.5 ps  S =  16.4 ps  Cin =  3.3 ff  Cout =   7.8 ff  Cmax = 241.7 ff  G =  234  
+ABC: Path  9 --    6252 : 4    3 OR4_X4   A =   3.46  Df = 670.7 -401.2 ps  S =  16.4 ps  Cin =  3.3 ff  Cout =   7.8 ff  Cmax = 241.7 ff  G =  234  
+ABC: Path 10 --    6253 : 4    2 OR4_X4   A =   3.46  Df = 782.2 -485.0 ps  S =  16.8 ps  Cin =  3.3 ff  Cout =   9.3 ff  Cmax = 241.7 ff  G =  276  
+ABC: Path 11 --    6254 : 2    4 NOR2_X4  A =   2.39  Df = 816.8 -509.3 ps  S =  18.4 ps  Cin =  6.3 ff  Cout =   9.4 ff  Cmax = 106.8 ff  G =  144  
+ABC: Path 12 --    6255 : 4    4 AND4_X4  A =   3.46  Df = 874.1 -530.2 ps  S =  13.3 ps  Cin =  3.3 ff  Cout =   9.7 ff  Cmax = 241.1 ff  G =  279  
+ABC: Path 13 --    6256 : 4    3 AND4_X4  A =   3.46  Df = 931.9 -550.6 ps  S =  14.3 ps  Cin =  3.3 ff  Cout =  11.4 ff  Cmax = 241.1 ff  G =  329  
+ABC: Path 14 --    6257 : 3    2 NAND3_X4 A =   3.46  Df = 955.4 -553.0 ps  S =  13.3 ps  Cin =  6.6 ff  Cout =   9.3 ff  Cmax = 233.2 ff  G =  136  
+ABC: Path 15 --    6258 : 2    3 NOR2_X4  A =   2.39  Df = 990.8 -576.0 ps  S =  20.7 ps  Cin =  6.3 ff  Cout =  11.4 ff  Cmax = 106.8 ff  G =  171  
+ABC: Path 16 --    6259 : 3    2 NAND3_X4 A =   3.46  Df =1015.4 -579.1 ps  S =  13.4 ps  Cin =  6.6 ff  Cout =   9.3 ff  Cmax = 233.2 ff  G =  136  
+ABC: Path 17 --    6260 : 2    3 NOR2_X4  A =   2.39  Df =1050.8 -602.1 ps  S =  20.7 ps  Cin =  6.3 ff  Cout =  11.4 ff  Cmax = 106.8 ff  G =  171  
+ABC: Path 18 --    6261 : 3    2 NAND3_X4 A =   3.46  Df =1075.4 -605.2 ps  S =  13.7 ps  Cin =  6.6 ff  Cout =   9.3 ff  Cmax = 233.2 ff  G =  136  
+ABC: Path 19 --    6262 : 2    3 NOR2_X4  A =   2.39  Df =1111.2 -628.6 ps  S =  20.7 ps  Cin =  6.3 ff  Cout =  11.4 ff  Cmax = 106.8 ff  G =  171  
+ABC: Path 20 --    6263 : 3    2 NAND3_X4 A =   3.46  Df =1135.9 -631.7 ps  S =  13.7 ps  Cin =  6.6 ff  Cout =   9.3 ff  Cmax = 233.2 ff  G =  136  
+ABC: Path 21 --    6264 : 2    3 NOR2_X4  A =   2.39  Df =1171.7 -655.2 ps  S =  20.7 ps  Cin =  6.3 ff  Cout =  11.4 ff  Cmax = 106.8 ff  G =  171  
+ABC: Path 22 --    6265 : 3    2 NAND3_X4 A =   3.46  Df =1196.3 -658.3 ps  S =  13.7 ps  Cin =  6.6 ff  Cout =   9.3 ff  Cmax = 233.2 ff  G =  136  
+ABC: Path 23 --    6266 : 2    3 NOR2_X4  A =   2.39  Df =1232.1 -681.7 ps  S =  20.7 ps  Cin =  6.3 ff  Cout =  11.4 ff  Cmax = 106.8 ff  G =  171  
+ABC: Path 24 --    6267 : 3    2 NAND3_X4 A =   3.46  Df =1256.7 -684.8 ps  S =  13.7 ps  Cin =  6.6 ff  Cout =   9.3 ff  Cmax = 233.2 ff  G =  136  
+ABC: Path 25 --    6268 : 2    3 NOR2_X4  A =   2.39  Df =1292.6 -708.2 ps  S =  20.7 ps  Cin =  6.3 ff  Cout =  11.4 ff  Cmax = 106.8 ff  G =  171  
+ABC: Path 26 --    6269 : 3    2 NAND3_X4 A =   3.46  Df =1317.2 -711.3 ps  S =  13.7 ps  Cin =  6.6 ff  Cout =   9.3 ff  Cmax = 233.2 ff  G =  136  
+ABC: Path 27 --    6270 : 2    3 NOR2_X4  A =   2.39  Df =1353.0 -734.7 ps  S =  20.7 ps  Cin =  6.3 ff  Cout =  11.4 ff  Cmax = 106.8 ff  G =  171  
+ABC: Path 28 --    6271 : 3    2 NAND3_X4 A =   3.46  Df =1377.6 -737.8 ps  S =  13.7 ps  Cin =  6.6 ff  Cout =   9.3 ff  Cmax = 233.2 ff  G =  136  
+ABC: Path 29 --    6272 : 2    3 NOR2_X4  A =   2.39  Df =1413.5 -761.3 ps  S =  20.7 ps  Cin =  6.3 ff  Cout =  11.4 ff  Cmax = 106.8 ff  G =  171  
+ABC: Path 30 --    6273 : 3    2 NAND3_X4 A =   3.46  Df =1438.1 -764.4 ps  S =  13.7 ps  Cin =  6.6 ff  Cout =   9.3 ff  Cmax = 233.2 ff  G =  136  
+ABC: Path 31 --    6274 : 2    2 NOR2_X4  A =   2.39  Df =1464.4 -781.2 ps  S =  12.5 ps  Cin =  6.3 ff  Cout =   4.0 ff  Cmax = 106.8 ff  G =   62  
+ABC: Path 32 --   11120 : 2    1 NAND2_X1 A =   0.80  Df =1480.3 -779.2 ps  S =  11.3 ps  Cin =  1.6 ff  Cout =   2.6 ff  Cmax =  59.4 ff  G =  157  
+ABC: Path 33 --   11121 : 2    1 XNOR2_X1 A =   1.60  Df =1516.9 -778.3 ps  S =  15.2 ps  Cin =  2.3 ff  Cout =   0.9 ff  Cmax =  26.0 ff  G =   39  
+ABC: Path 34 --   11122 : 3    1 MUX2_X1  A =   1.86  Df =1552.3 -758.7 ps  S =   9.1 ps  Cin =  1.2 ff  Cout =   1.0 ff  Cmax =  60.5 ff  G =   75  
+ABC: Path 35 --   11123 : 2    1 AND2_X1  A =   1.06  Df =1577.5 -757.0 ps  S =   5.3 ps  Cin =  0.9 ff  Cout =   0.0 ff  Cmax =  60.6 ff  G =    0  
+ABC: Start-point = pi107 (\count_instr [2]).  End-point = po1456 ($auto$rtlil.cc:3501:MuxGate$31811).
+ABC: + write_blif <abc-temp-dir>/output.blif 
+
+5.1.2. Re-integrating ABC results.
+ABC RESULTS:           AND2_X1 cells:      144
+ABC RESULTS:           AND3_X1 cells:       15
+ABC RESULTS:           AND4_X1 cells:        1
+ABC RESULTS:           AND4_X4 cells:        6
+ABC RESULTS:         AOI211_X1 cells:      143
+ABC RESULTS:          AOI21_X1 cells:      855
+ABC RESULTS:         AOI221_X1 cells:       45
+ABC RESULTS:         AOI222_X1 cells:       41
+ABC RESULTS:          AOI22_X1 cells:       87
+ABC RESULTS:            BUF_X1 cells:      831
+ABC RESULTS:            BUF_X2 cells:        2
+ABC RESULTS:            BUF_X4 cells:        4
+ABC RESULTS:         CLKBUF_X1 cells:      146
+ABC RESULTS:         CLKBUF_X2 cells:       14
+ABC RESULTS:         CLKBUF_X3 cells:        1
+ABC RESULTS:            INV_X1 cells:      409
+ABC RESULTS:           MUX2_X1 cells:     2062
+ABC RESULTS:          NAND2_X1 cells:      732
+ABC RESULTS:          NAND3_X1 cells:      182
+ABC RESULTS:          NAND3_X2 cells:        8
+ABC RESULTS:          NAND3_X4 cells:        9
+ABC RESULTS:          NAND4_X1 cells:       18
+ABC RESULTS:          NAND4_X2 cells:        5
+ABC RESULTS:          NAND4_X4 cells:        1
+ABC RESULTS:           NOR2_X1 cells:      594
+ABC RESULTS:           NOR2_X2 cells:        8
+ABC RESULTS:           NOR2_X4 cells:       12
+ABC RESULTS:           NOR3_X1 cells:       64
+ABC RESULTS:           NOR4_X1 cells:       17
+ABC RESULTS:           NOR4_X2 cells:        2
+ABC RESULTS:           NOR4_X4 cells:        2
+ABC RESULTS:         OAI211_X1 cells:      276
+ABC RESULTS:          OAI21_X1 cells:      736
+ABC RESULTS:         OAI221_X1 cells:      126
+ABC RESULTS:         OAI222_X1 cells:        2
+ABC RESULTS:          OAI22_X1 cells:       36
+ABC RESULTS:          OAI33_X1 cells:        1
+ABC RESULTS:            OR2_X1 cells:       99
+ABC RESULTS:            OR3_X1 cells:       29
+ABC RESULTS:            OR4_X1 cells:        8
+ABC RESULTS:            OR4_X4 cells:        5
+ABC RESULTS:          XNOR2_X1 cells:      294
+ABC RESULTS:           XOR2_X1 cells:       92
+ABC RESULTS:        internal signals:     7670
+ABC RESULTS:           input signals:     1607
+ABC RESULTS:          output signals:     1625
+Removing temp directory.
+Removing global temp directory.

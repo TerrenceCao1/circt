@@ -1,0 +1,757 @@
+
+ /----------------------------------------------------------------------------\
+ |  yosys -- Yosys Open SYnthesis Suite                                       |
+ |  Copyright (C) 2012 - 2026  Claire Xenia Wolf <claire@yosyshq.com>         |
+ |  Distributed under an ISC-like license, type "license" to see terms        |
+ \----------------------------------------------------------------------------/
+ Yosys 0.66 (git sha1 86f2ddebc-dirty, g++ 16.1.1 -march=x86-64 -mtune=generic -O2 -fno-plt -fexceptions -fstack-clash-protection -fcf-protection -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -ffile-prefix-map=/build/yosys/src=/usr/src/debug/yosys -fPIC -O3) [startdir/yosys at makepkg]
+
+-- Running command `
+    read_verilog -sv ../testfiles//square.v
+    hierarchy -check -top top
+    synth -flatten -top top
+    dfflibmap -liberty /home/tzcao/dev/circt/tools/hw-estimate/test/yosys-verify/NangateOpenCellLibrary_typical.lib
+    tee -o /home/tzcao/dev/circt/tools/hw-estimate/test/yosys-verify/out_dir/abc_speed.txt abc -liberty /home/tzcao/dev/circt/tools/hw-estimate/test/yosys-verify/NangateOpenCellLibrary_typical.lib -constr /home/tzcao/dev/circt/tools/hw-estimate/test/yosys-verify/out_dir/abc.constr -script /home/tzcao/dev/circt/tools/hw-estimate/test/yosys-verify/abc_speed.script
+    opt_clean -purge
+    tee -q -o /home/tzcao/dev/circt/tools/hw-estimate/test/yosys-verify/out_dir/stat_speed.json stat -json -liberty /home/tzcao/dev/circt/tools/hw-estimate/test/yosys-verify/NangateOpenCellLibrary_typical.lib -top top
+    write_verilog -noattr /home/tzcao/dev/circt/tools/hw-estimate/test/yosys-verify/out_dir/netlist_speed.v
+  ' --
+
+1. Executing Verilog-2005 frontend: ../testfiles//square.v
+Parsing SystemVerilog input from `../testfiles//square.v' to AST representation.
+Generating RTLIL representation for module `\top'.
+Successfully finished Verilog frontend.
+
+2. Executing HIERARCHY pass (managing design hierarchy).
+
+2.1. Analyzing design hierarchy..
+Top module:  \top
+
+2.2. Analyzing design hierarchy..
+Top module:  \top
+Removed 0 unused modules.
+
+3. Executing SYNTH pass.
+
+3.1. Executing HIERARCHY pass (managing design hierarchy).
+
+3.1.1. Analyzing design hierarchy..
+Top module:  \top
+
+3.1.2. Analyzing design hierarchy..
+Top module:  \top
+Removed 0 unused modules.
+
+3.2. Executing PROC pass (convert processes to netlists).
+
+3.2.1. Executing PROC_CLEAN pass (remove empty switches from decision trees).
+Cleaned up 0 empty switches.
+
+3.2.2. Executing PROC_RMDEAD pass (remove dead branches from decision trees).
+Removed a total of 0 dead cases.
+
+3.2.3. Executing PROC_PRUNE pass (remove redundant assignments in processes).
+Removed 0 redundant assignments.
+Promoted 0 assignments to connections.
+
+3.2.4. Executing PROC_INIT pass (extract init attributes).
+
+3.2.5. Executing PROC_ARST pass (detect async resets in processes).
+
+3.2.6. Executing PROC_ROM pass (convert switches to ROMs).
+Converted 0 switches.
+
+3.2.7. Executing PROC_MUX pass (convert decision trees to multiplexers).
+
+3.2.8. Executing PROC_DLATCH pass (convert process syncs to latches).
+
+3.2.9. Executing PROC_DFF pass (convert process syncs to FFs).
+
+3.2.10. Executing PROC_MEMWR pass (convert process memory writes to cells).
+
+3.2.11. Executing PROC_CLEAN pass (remove empty switches from decision trees).
+Cleaned up 0 empty switches.
+
+3.2.12. Executing OPT_EXPR pass (perform const folding).
+Optimizing module top.
+
+3.3. Executing CHECK pass (checking for obvious problems).
+Checking module top...
+Found and reported 0 problems.
+
+3.4. Executing FLATTEN pass (flatten design).
+
+3.5. Executing OPT_EXPR pass (perform const folding).
+Optimizing module top.
+
+3.6. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \top..
+Removed 0 unused cells and 18484 unused wires.
+<suppressed ~1 debug messages>
+
+3.7. Executing CHECK pass (checking for obvious problems).
+Checking module top...
+Found and reported 0 problems.
+
+3.8. Executing OPT pass (performing simple optimizations).
+
+3.8.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module top.
+
+3.8.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\top'.
+Computing hashes of 41850 cells of `\top'.
+Finding duplicate cells in `\top'.
+Computing hashes of 35492 cells of `\top'.
+Finding duplicate cells in `\top'.
+<suppressed ~19074 debug messages>
+Removed a total of 6358 cells.
+
+3.8.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \top..
+  Creating internal representation of mux trees.
+  No muxes found in this module.
+Removed 0 multiplexer ports.
+
+3.8.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \top.
+Performed a total of 0 changes.
+
+3.8.5. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\top'.
+Computing hashes of 35492 cells of `\top'.
+Finding duplicate cells in `\top'.
+Removed a total of 0 cells.
+
+3.8.6. Executing OPT_DFF pass (perform DFF optimizations).
+
+3.8.7. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \top..
+Removed 0 unused cells and 6358 unused wires.
+<suppressed ~1 debug messages>
+
+3.8.8. Executing OPT_EXPR pass (perform const folding).
+Optimizing module top.
+
+3.8.9. Rerunning OPT passes. (Maybe there is more to do..)
+
+3.8.10. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \top..
+  Creating internal representation of mux trees.
+  No muxes found in this module.
+Removed 0 multiplexer ports.
+
+3.8.11. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \top.
+Performed a total of 0 changes.
+
+3.8.12. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\top'.
+Computing hashes of 35492 cells of `\top'.
+Finding duplicate cells in `\top'.
+Removed a total of 0 cells.
+
+3.8.13. Executing OPT_DFF pass (perform DFF optimizations).
+
+3.8.14. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \top..
+
+3.8.15. Executing OPT_EXPR pass (perform const folding).
+Optimizing module top.
+
+3.8.16. Finished fast OPT passes. (There is nothing left to do.)
+
+3.9. Executing FSM pass (extract and optimize FSM).
+
+3.9.1. Executing FSM_DETECT pass (finding FSMs in design).
+
+3.9.2. Executing FSM_EXTRACT pass (extracting FSM from design).
+
+3.9.3. Executing FSM_OPT pass (simple optimizations of FSMs).
+
+3.9.4. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \top..
+
+3.9.5. Executing FSM_OPT pass (simple optimizations of FSMs).
+
+3.9.6. Executing FSM_RECODE pass (re-assigning FSM state encoding).
+
+3.9.7. Executing FSM_INFO pass (dumping all available information on FSM cells).
+
+3.9.8. Executing FSM_MAP pass (mapping FSMs to basic logic).
+
+3.10. Executing OPT pass (performing simple optimizations).
+
+3.10.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module top.
+
+3.10.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\top'.
+Computing hashes of 35492 cells of `\top'.
+Finding duplicate cells in `\top'.
+Removed a total of 0 cells.
+
+3.10.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \top..
+  Creating internal representation of mux trees.
+  No muxes found in this module.
+Removed 0 multiplexer ports.
+
+3.10.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \top.
+Performed a total of 0 changes.
+
+3.10.5. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\top'.
+Computing hashes of 35492 cells of `\top'.
+Finding duplicate cells in `\top'.
+Removed a total of 0 cells.
+
+3.10.6. Executing OPT_DFF pass (perform DFF optimizations).
+
+3.10.7. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \top..
+
+3.10.8. Executing OPT_EXPR pass (perform const folding).
+Optimizing module top.
+
+3.10.9. Finished fast OPT passes. (There is nothing left to do.)
+
+3.11. Executing WREDUCE pass (reducing word size of cells).
+
+3.12. Executing PEEPOPT pass (run peephole optimizers).
+
+3.13. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \top..
+
+3.14. Executing ALUMACC pass (create $alu and $macc cells).
+Extracting $alu and $macc cells in module top:
+  created 0 $alu and 0 $macc cells.
+
+3.15. Executing SHARE pass (SAT-based resource sharing).
+
+3.16. Executing OPT pass (performing simple optimizations).
+
+3.16.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module top.
+
+3.16.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\top'.
+Computing hashes of 35492 cells of `\top'.
+Finding duplicate cells in `\top'.
+Removed a total of 0 cells.
+
+3.16.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \top..
+  Creating internal representation of mux trees.
+  No muxes found in this module.
+Removed 0 multiplexer ports.
+
+3.16.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \top.
+Performed a total of 0 changes.
+
+3.16.5. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\top'.
+Computing hashes of 35492 cells of `\top'.
+Finding duplicate cells in `\top'.
+Removed a total of 0 cells.
+
+3.16.6. Executing OPT_DFF pass (perform DFF optimizations).
+
+3.16.7. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \top..
+
+3.16.8. Executing OPT_EXPR pass (perform const folding).
+Optimizing module top.
+
+3.16.9. Finished fast OPT passes. (There is nothing left to do.)
+
+3.17. Executing MEMORY pass.
+
+3.17.1. Executing OPT_MEM pass (optimize memories).
+Performed a total of 0 transformations.
+
+3.17.2. Executing OPT_MEM_PRIORITY pass (removing unnecessary memory write priority relations).
+Performed a total of 0 transformations.
+
+3.17.3. Executing OPT_MEM_FEEDBACK pass (finding memory read-to-write feedback paths).
+
+3.17.4. Executing MEMORY_BMUX2ROM pass (converting muxes to ROMs).
+
+3.17.5. Executing MEMORY_DFF pass (merging $dff cells to $memrd).
+
+3.17.6. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \top..
+
+3.17.7. Executing MEMORY_SHARE pass (consolidating $memrd/$memwr cells).
+
+3.17.8. Executing OPT_MEM_WIDEN pass (optimize memories where all ports are wide).
+Performed a total of 0 transformations.
+
+3.17.9. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \top..
+
+3.17.10. Executing MEMORY_COLLECT pass (generating $mem cells).
+
+3.18. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \top..
+
+3.19. Executing OPT pass (performing simple optimizations).
+
+3.19.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module top.
+
+3.19.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\top'.
+Computing hashes of 35492 cells of `\top'.
+Finding duplicate cells in `\top'.
+Removed a total of 0 cells.
+
+3.19.3. Executing OPT_DFF pass (perform DFF optimizations).
+
+3.19.4. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \top..
+
+3.19.5. Finished fast OPT passes.
+
+3.20. Executing MEMORY_MAP pass (converting memories to logic and flip-flops).
+
+3.21. Executing OPT pass (performing simple optimizations).
+
+3.21.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module top.
+
+3.21.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\top'.
+Computing hashes of 35492 cells of `\top'.
+Finding duplicate cells in `\top'.
+Removed a total of 0 cells.
+
+3.21.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \top..
+  Creating internal representation of mux trees.
+  No muxes found in this module.
+Removed 0 multiplexer ports.
+
+3.21.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \top.
+Performed a total of 0 changes.
+
+3.21.5. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\top'.
+Computing hashes of 35492 cells of `\top'.
+Finding duplicate cells in `\top'.
+Removed a total of 0 cells.
+
+3.21.6. Executing OPT_SHARE pass.
+
+3.21.7. Executing OPT_DFF pass (perform DFF optimizations).
+
+3.21.8. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \top..
+
+3.21.9. Executing OPT_EXPR pass (perform const folding).
+Optimizing module top.
+
+3.21.10. Finished fast OPT passes. (There is nothing left to do.)
+
+3.22. Executing TECHMAP pass (map to technology primitives).
+
+3.22.1. Executing Verilog-2005 frontend: /usr/bin/../share/yosys/techmap.v
+Parsing Verilog input from `/usr/bin/../share/yosys/techmap.v' to AST representation.
+Generating RTLIL representation for module `\_90_simplemap_bool_ops'.
+Generating RTLIL representation for module `\_90_simplemap_reduce_ops'.
+Generating RTLIL representation for module `\_90_simplemap_logic_ops'.
+Generating RTLIL representation for module `\_90_simplemap_compare_ops'.
+Generating RTLIL representation for module `\_90_simplemap_various'.
+Generating RTLIL representation for module `\_90_simplemap_registers'.
+Generating RTLIL representation for module `\_90_shift_ops_shr_shl_sshl_sshr'.
+Generating RTLIL representation for module `\_90_shift_shiftx'.
+Generating RTLIL representation for module `\_90_fa'.
+Generating RTLIL representation for module `\_90_lcu_brent_kung'.
+Generating RTLIL representation for module `\_90_alu'.
+Generating RTLIL representation for module `\_90_macc'.
+Generating RTLIL representation for module `\_90_alumacc'.
+Generating RTLIL representation for module `$__div_mod_u'.
+Generating RTLIL representation for module `$__div_mod_trunc'.
+Generating RTLIL representation for module `\_90_div'.
+Generating RTLIL representation for module `\_90_mod'.
+Generating RTLIL representation for module `$__div_mod_floor'.
+Generating RTLIL representation for module `\_90_divfloor'.
+Generating RTLIL representation for module `\_90_modfloor'.
+Generating RTLIL representation for module `\_90_pow'.
+Generating RTLIL representation for module `\_90_demux'.
+Generating RTLIL representation for module `\_90_lut'.
+Generating RTLIL representation for module `$connect'.
+Generating RTLIL representation for module `$input_port'.
+Successfully finished Verilog frontend.
+
+3.22.2. Continuing TECHMAP pass.
+Using extmapper simplemap for cells of type $and.
+Using extmapper simplemap for cells of type $not.
+Using extmapper simplemap for cells of type $or.
+No more expansions possible.
+<suppressed ~35569 debug messages>
+
+3.23. Executing OPT pass (performing simple optimizations).
+
+3.23.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module top.
+
+3.23.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\top'.
+Computing hashes of 35492 cells of `\top'.
+Finding duplicate cells in `\top'.
+Removed a total of 0 cells.
+
+3.23.3. Executing OPT_DFF pass (perform DFF optimizations).
+
+3.23.4. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \top..
+
+3.23.5. Finished fast OPT passes.
+
+3.24. Executing ABC pass (technology mapping using ABC).
+
+3.24.1. Extracting gate netlist of module `\top' to `<abc-temp-dir>/input.blif'..
+
+3.24.1.1. Executed ABC.
+Extracted 35492 gates and 35556 wires to a netlist network with 64 inputs and 126 outputs.
+Running ABC script: <abc-temp-dir>/abc.script
+ABC: ======== ABC command line "source <abc-temp-dir>/abc.script"
+ABC: + read_blif <abc-temp-dir>/input.blif 
+ABC: + read_library <abc-temp-dir>/stdcells.genlib 
+ABC: + strash 
+ABC: + &get -n 
+ABC: + &fraig -x 
+ABC: + &put 
+ABC: + scorr 
+ABC: Warning: The network is combinational (run "fraig" or "fraig_sweep").
+ABC: + dc2 
+ABC: + dretime 
+ABC: + strash 
+ABC: + &get -n 
+ABC: + &dch -f 
+ABC: + &nf 
+ABC: + &put 
+ABC: + write_blif <abc-temp-dir>/output.blif 
+
+3.24.1.2. Re-integrating ABC results.
+ABC RESULTS:               AND cells:     2217
+ABC RESULTS:            ANDNOT cells:      481
+ABC RESULTS:               MUX cells:        6
+ABC RESULTS:              NAND cells:     6334
+ABC RESULTS:               NOR cells:       90
+ABC RESULTS:               NOT cells:       22
+ABC RESULTS:                OR cells:      630
+ABC RESULTS:             ORNOT cells:      402
+ABC RESULTS:              XNOR cells:      945
+ABC RESULTS:               XOR cells:     2241
+ABC RESULTS:        internal signals:    35366
+ABC RESULTS:           input signals:       64
+ABC RESULTS:          output signals:      126
+Removing temp directory.
+Removing global temp directory.
+
+3.25. Executing OPT pass (performing simple optimizations).
+
+3.25.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module top.
+
+3.25.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\top'.
+Computing hashes of 13368 cells of `\top'.
+Finding duplicate cells in `\top'.
+Removed a total of 0 cells.
+
+3.25.3. Executing OPT_DFF pass (perform DFF optimizations).
+
+3.25.4. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \top..
+Removed 0 unused cells and 35556 unused wires.
+<suppressed ~18359 debug messages>
+
+3.25.5. Finished fast OPT passes.
+
+3.26. Executing HIERARCHY pass (managing design hierarchy).
+Attribute `top' found on module `top'. Setting top module to top.
+
+3.26.1. Analyzing design hierarchy..
+Top module:  \top
+
+3.26.2. Analyzing design hierarchy..
+Top module:  \top
+Removed 0 unused modules.
+
+3.27. Printing statistics.
+
+=== top ===
+
+        +----------Local Count, excluding submodules.
+        | 
+    13434 wires
+    13434 wire bits
+      192 public wires
+      192 public wire bits
+      192 ports
+      192 port bits
+    13368 cells
+      481   $_ANDNOT_
+     2217   $_AND_
+        6   $_MUX_
+     6334   $_NAND_
+       90   $_NOR_
+       22   $_NOT_
+      402   $_ORNOT_
+      630   $_OR_
+      945   $_XNOR_
+     2241   $_XOR_
+
+3.28. Executing CHECK pass (checking for obvious problems).
+Checking module top...
+Found and reported 0 problems.
+
+4. Executing DFFLIBMAP pass (mapping DFF cells to sequential cells from liberty file).
+  cell DFF_X1 (noninv, pins=4, area=4.52) is a direct match for cell type $_DFF_P_.
+  cell DFFR_X1 (noninv, pins=5, area=5.32) is a direct match for cell type $_DFF_PN0_.
+  cell DFFS_X1 (noninv, pins=5, area=5.32) is a direct match for cell type $_DFF_PN1_.
+  cell DFFRS_X1 (noninv, pins=6, area=6.38) is a direct match for cell type $_DFFSR_PNN_.
+  final dff cell mappings:
+    unmapped dff cell: $_DFF_N_
+    \DFF_X1 _DFF_P_ (.CK( C), .D( D), .Q( Q), .QN(~Q));
+    unmapped dff cell: $_DFF_NN0_
+    unmapped dff cell: $_DFF_NN1_
+    unmapped dff cell: $_DFF_NP0_
+    unmapped dff cell: $_DFF_NP1_
+    \DFFR_X1 _DFF_PN0_ (.CK( C), .D( D), .Q( Q), .QN(~Q), .RN( R));
+    \DFFS_X1 _DFF_PN1_ (.CK( C), .D( D), .Q( Q), .QN(~Q), .SN( R));
+    unmapped dff cell: $_DFF_PP0_
+    unmapped dff cell: $_DFF_PP1_
+    unmapped dff cell: $_DFFE_NN_
+    unmapped dff cell: $_DFFE_NP_
+    unmapped dff cell: $_DFFE_PN_
+    unmapped dff cell: $_DFFE_PP_
+    unmapped dff cell: $_DFFSR_NNN_
+    unmapped dff cell: $_DFFSR_NNP_
+    unmapped dff cell: $_DFFSR_NPN_
+    unmapped dff cell: $_DFFSR_NPP_
+    \DFFRS_X1 _DFFSR_PNN_ (.CK( C), .D( D), .Q( Q), .QN(~Q), .RN( R), .SN( S));
+    unmapped dff cell: $_DFFSR_PNP_
+    unmapped dff cell: $_DFFSR_PPN_
+    unmapped dff cell: $_DFFSR_PPP_
+
+4.1. Executing DFFLEGALIZE pass (convert FFs to types supported by the target).
+<suppressed ~8 debug messages>
+Mapping DFF cells in module `\top':
+
+5. Executing ABC pass (technology mapping using ABC).
+
+5.1. Extracting gate netlist of module `\top' to `<abc-temp-dir>/input.blif'..
+ABC: using cached merged SCL: /tmp/yosys-liberty-scl-cache/yosys_merged_2dbf527a.scl (1 files)
+
+5.1.1. Executed ABC.
+Extracted 13368 gates and 13432 wires to a netlist network with 64 inputs and 126 outputs.
+Running ABC script: <abc-temp-dir>/abc.script
+ABC: ======== ABC command line "source <abc-temp-dir>/abc.script"
+ABC: + read_blif <abc-temp-dir>/input.blif 
+ABC: + read_scl /tmp/yosys-liberty-scl-cache/yosys_merged_2dbf527a.scl 
+ABC: Warning: Detected 2 multi-output cells (for example, "FA_X1").
+ABC: + read_constr -v /home/tzcao/dev/circt/tools/hw-estimate/test/yosys-verify/out_dir/abc.constr 
+ABC: Setting driving cell to be "BUF_X1".
+ABC: Setting output load to be 0.000000.
+ABC: + source /home/tzcao/dev/circt/tools/hw-estimate/test/yosys-verify/abc_speed.script 
+ABC: WireLoad = "5K_hvratio_1_1"  Gates =  11288 ( 10.3 %)   Cap =  4.9 ff (  3.6 %)   Area =    13528.49 ( 93.0 %)   Delay =  5069.41 ps  (  2.0 %)               
+ABC: WireLoad = "none"  Gates =  11288 ( 10.3 %)   Cap =  4.0 ff (  1.3 %)   Area =    12993.57 ( 93.1 %)   Delay =  4219.52 ps  (  2.4 %)               
+ABC: Path  0 --      64 : 0    1 pi        A =   0.00  Df =   9.0   -2.8 ps  S =  10.7 ps  Cin =  0.0 ff  Cout =   3.4 ff  Cmax =   0.0 ff  G =    0  
+ABC: Path  1 --    4408 : 1    4 BUF_X4    A =   1.86  Df =  34.3   -2.2 ps  S =  10.4 ps  Cin =  3.2 ff  Cout =  12.8 ff  Cmax = 242.3 ff  G =  377  
+ABC: Path  2 --    4409 : 1   10 BUF_X8    A =   3.46  Df =  66.1   -4.4 ps  S =  16.1 ps  Cin =  6.2 ff  Cout =  45.1 ff  Cmax = 484.0 ff  G =  693  
+ABC: Path  3 --    9422 : 2    1 NAND2_X4  A =   2.39  Df =  79.9   -3.1 ps  S =   8.2 ps  Cin =  5.9 ff  Cout =   4.3 ff  Cmax = 237.4 ff  G =   72  
+ABC: Path  4 --    9423 : 2    2 XOR2_X2   A =   2.39  Df = 130.3   -4.6 ps  S =  24.5 ps  Cin =  4.4 ff  Cout =   4.1 ff  Cmax =  50.5 ff  G =   91  
+ABC: Path  5 --    9442 : 2    2 XOR2_X1   A =   1.60  Df = 190.8   -4.5 ps  S =  32.7 ps  Cin =  2.3 ff  Cout =   4.0 ff  Cmax =  25.3 ff  G =  173  
+ABC: Path  6 --    9458 : 2    2 XOR2_X1   A =   1.60  Df = 263.4  -12.8 ps  S =  30.2 ps  Cin =  2.3 ff  Cout =   3.4 ff  Cmax =  25.3 ff  G =  140  
+ABC: Path  7 --    9460 : 2    2 OR2_X2    A =   1.33  Df = 300.6   -4.9 ps  S =   9.4 ps  Cin =  1.6 ff  Cout =   4.8 ff  Cmax = 121.2 ff  G =  286  
+ABC: Path  8 --    9483 : 3    2 OAI21_X2  A =   1.86  Df = 337.9  -17.2 ps  S =  18.2 ps  Cin =  3.1 ff  Cout =   3.3 ff  Cmax =  52.1 ff  G =  101  
+ABC: Path  9 --    9484 : 3    2 AOI21_X1  A =   1.06  Df = 379.3  -38.2 ps  S =  28.7 ps  Cin =  1.6 ff  Cout =   3.2 ff  Cmax =  25.3 ff  G =  203  
+ABC: Path 10 --    9485 : 6    2 OAI33_X1  A =   1.86  Df = 453.5  -33.1 ps  S =  86.9 ps  Cin =  1.5 ff  Cout =   5.6 ff  Cmax =  11.5 ff  G =  355  
+ABC: Path 11 --    9486 : 3    3 OAI21_X2  A =   1.86  Df = 488.1  -22.1 ps  S =  26.8 ps  Cin =  3.1 ff  Cout =   6.9 ff  Cmax =  52.1 ff  G =  220  
+ABC: Path 12 --    9487 : 5    2 OAI221_X2 A =   2.93  Df = 551.4  -47.4 ps  S =  40.7 ps  Cin =  3.2 ff  Cout =   5.1 ff  Cmax =  43.9 ff  G =  151  
+ABC: Path 13 --    9488 : 3    2 AOI21_X2  A =   1.86  Df = 573.9  -28.9 ps  S =  25.6 ps  Cin =  3.1 ff  Cout =   5.0 ff  Cmax =  50.7 ff  G =  159  
+ABC: Path 14 --    9489 : 4    2 OAI22_X2  A =   2.39  Df = 622.7  -50.5 ps  S =  34.3 ps  Cin =  3.1 ff  Cout =   5.1 ff  Cmax =  46.3 ff  G =  153  
+ABC: Path 15 --    9490 : 3    2 AOI21_X2  A =   1.86  Df = 644.3  -33.2 ps  S =  25.2 ps  Cin =  3.1 ff  Cout =   5.0 ff  Cmax =  50.7 ff  G =  160  
+ABC: Path 16 --    9491 : 3    2 OAI21_X2  A =   1.86  Df = 681.4  -48.2 ps  S =  22.4 ps  Cin =  3.1 ff  Cout =   5.1 ff  Cmax =  52.1 ff  G =  155  
+ABC: Path 17 --    9492 : 3    2 AOI21_X2  A =   1.86  Df = 700.9  -31.3 ps  S =  25.1 ps  Cin =  3.1 ff  Cout =   5.0 ff  Cmax =  50.7 ff  G =  160  
+ABC: Path 18 --    9493 : 3    2 OAI21_X2  A =   1.86  Df = 734.3  -44.8 ps  S =  18.2 ps  Cin =  3.1 ff  Cout =   3.3 ff  Cmax =  52.1 ff  G =  101  
+ABC: Path 19 --    9494 : 3    2 AOI21_X1  A =   1.06  Df = 758.6  -19.3 ps  S =  36.9 ps  Cin =  1.6 ff  Cout =   5.0 ff  Cmax =  25.3 ff  G =  316  
+ABC: Path 20 --    9495 : 3    2 OAI21_X2  A =   1.86  Df = 791.5  -29.8 ps  S =  18.2 ps  Cin =  3.1 ff  Cout =   3.3 ff  Cmax =  52.1 ff  G =  101  
+ABC: Path 21 --    9496 : 3    2 AOI21_X1  A =   1.06  Df = 811.9   -9.5 ps  S =  28.7 ps  Cin =  1.6 ff  Cout =   3.2 ff  Cmax =  25.3 ff  G =  203  
+ABC: Path 22 --    9497 : 6    2 OAI33_X1  A =   1.86  Df = 911.3  -72.2 ps  S =  74.0 ps  Cin =  1.5 ff  Cout =   3.9 ff  Cmax =  11.5 ff  G =  240  
+ABC: Path 23 --    9498 : 3    3 AOI21_X1  A =   1.06  Df = 951.7  -50.1 ps  S =  46.1 ps  Cin =  1.6 ff  Cout =   7.0 ff  Cmax =  25.3 ff  G =  447  
+ABC: Path 24 --    9499 : 4    2 OAI211_X2 A =   2.39  Df = 996.5  -59.4 ps  S =  25.6 ps  Cin =  3.1 ff  Cout =   5.1 ff  Cmax =  50.8 ff  G =  155  
+ABC: Path 25 --    9500 : 3    2 AOI21_X2  A =   1.86  Df =1016.6  -39.1 ps  S =  25.4 ps  Cin =  3.1 ff  Cout =   5.0 ff  Cmax =  50.7 ff  G =  160  
+ABC: Path 26 --    9501 : 3    2 OAI21_X2  A =   1.86  Df =1053.1  -53.4 ps  S =  22.4 ps  Cin =  3.1 ff  Cout =   5.1 ff  Cmax =  52.1 ff  G =  155  
+ABC: Path 27 --    9502 : 3    2 AOI21_X2  A =   1.86  Df =1072.6  -36.1 ps  S =  25.1 ps  Cin =  3.1 ff  Cout =   5.0 ff  Cmax =  50.7 ff  G =  160  
+ABC: Path 28 --    9503 : 3    2 OAI21_X2  A =   1.86  Df =1109.7  -51.2 ps  S =  22.4 ps  Cin =  3.1 ff  Cout =   5.1 ff  Cmax =  52.1 ff  G =  155  
+ABC: Path 29 --    9504 : 3    2 AOI21_X2  A =   1.86  Df =1129.2  -34.3 ps  S =  25.1 ps  Cin =  3.1 ff  Cout =   5.0 ff  Cmax =  50.7 ff  G =  160  
+ABC: Path 30 --    9505 : 3    2 OAI21_X2  A =   1.86  Df =1160.9  -46.0 ps  S =  18.2 ps  Cin =  3.1 ff  Cout =   3.3 ff  Cmax =  52.1 ff  G =  101  
+ABC: Path 31 --    9506 : 3    2 AOI21_X1  A =   1.06  Df =1181.3  -26.4 ps  S =  28.7 ps  Cin =  1.6 ff  Cout =   3.2 ff  Cmax =  25.3 ff  G =  203  
+ABC: Path 32 --    9507 : 6    2 OAI33_X1  A =   1.86  Df =1279.8  -87.9 ps  S =  73.2 ps  Cin =  1.5 ff  Cout =   3.8 ff  Cmax =  11.5 ff  G =  242  
+ABC: Path 33 --    9508 : 3    2 OAI21_X1  A =   1.06  Df =1328.5  -63.3 ps  S =  52.0 ps  Cin =  1.6 ff  Cout =   8.9 ff  Cmax =  26.1 ff  G =  532  
+ABC: Path 34 --    9509 : 3    2 AOI21_X4  A =   3.46  Df =1372.4  -84.5 ps  S =  25.3 ps  Cin =  6.0 ff  Cout =   8.7 ff  Cmax = 101.0 ff  G =  143  
+ABC: Path 35 --    9510 : 3    2 OAI21_X4  A =   3.46  Df =1393.9  -69.7 ps  S =  20.9 ps  Cin =  6.1 ff  Cout =   8.9 ff  Cmax = 104.1 ff  G =  136  
+ABC: Path 36 --    9511 : 3    3 AOI21_X4  A =   3.46  Df =1430.6  -86.8 ps  S =  25.5 ps  Cin =  6.0 ff  Cout =  10.1 ff  Cmax = 101.0 ff  G =  167  
+ABC: Path 37 --    9512 : 4    2 OAI211_X4 A =   4.52  Df =1455.4  -80.7 ps  S =  17.4 ps  Cin =  6.2 ff  Cout =   3.4 ff  Cmax = 101.6 ff  G =   51  
+ABC: Path 38 --    9513 : 3    2 AND3_X2   A =   1.60  Df =1495.7  -71.1 ps  S =  14.5 ps  Cin =  1.6 ff  Cout =   7.4 ff  Cmax = 120.5 ff  G =  460  
+ABC: Path 39 --    9514 : 3    2 OAI21_X4  A =   3.46  Df =1524.1  -83.3 ps  S =  15.8 ps  Cin =  6.1 ff  Cout =   4.5 ff  Cmax = 104.1 ff  G =   67  
+ABC: Path 40 --    9515 : 3    2 AOI21_X2  A =   1.86  Df =1545.0  -63.0 ps  S =  30.9 ps  Cin =  3.1 ff  Cout =   7.4 ff  Cmax =  50.7 ff  G =  241  
+ABC: Path 41 --    9516 : 3    2 OAI21_X4  A =   3.46  Df =1578.8  -74.9 ps  S =  19.5 ps  Cin =  6.1 ff  Cout =   7.7 ff  Cmax = 104.1 ff  G =  116  
+ABC: Path 42 --    9517 : 3    2 AOI21_X4  A =   3.46  Df =1596.5  -57.9 ps  S =  22.4 ps  Cin =  6.0 ff  Cout =   7.4 ff  Cmax = 101.0 ff  G =  122  
+ABC: Path 43 --    9518 : 3    2 OAI21_X4  A =   3.46  Df =1625.6  -68.8 ps  S =  15.8 ps  Cin =  6.1 ff  Cout =   4.5 ff  Cmax = 104.1 ff  G =   67  
+ABC: Path 44 --    9519 : 3    2 AOI21_X2  A =   1.86  Df =1643.0  -50.8 ps  S =  23.4 ps  Cin =  3.1 ff  Cout =   4.3 ff  Cmax =  50.7 ff  G =  138  
+ABC: Path 45 --    9520 : 3    2 OAI21_X2  A =   1.86  Df =1677.3  -64.3 ps  S =  20.8 ps  Cin =  3.1 ff  Cout =   4.5 ff  Cmax =  52.1 ff  G =  134  
+ABC: Path 46 --    9521 : 3    2 AOI21_X2  A =   1.86  Df =1693.5  -50.1 ps  S =  19.3 ps  Cin =  3.1 ff  Cout =   2.5 ff  Cmax =  50.7 ff  G =   81  
+ABC: Path 47 --    9522 : 6    2 OAI33_X1  A =   1.86  Df =1793.2 -116.0 ps  S =  74.0 ps  Cin =  1.5 ff  Cout =   3.9 ff  Cmax =  11.5 ff  G =  242  
+ABC: Path 48 --    9523 : 3    3 AOI21_X1  A =   1.06  Df =1833.6  -95.1 ps  S =  46.1 ps  Cin =  1.6 ff  Cout =   7.0 ff  Cmax =  25.3 ff  G =  447  
+ABC: Path 49 --    9524 : 4    2 OAI211_X2 A =   2.39  Df =1873.7 -102.6 ps  S =  21.6 ps  Cin =  3.1 ff  Cout =   3.3 ff  Cmax =  50.8 ff  G =  101  
+ABC: Path 50 --    9525 : 3    2 AOI21_X1  A =   1.06  Df =1898.8  -75.6 ps  S =  36.9 ps  Cin =  1.6 ff  Cout =   5.0 ff  Cmax =  25.3 ff  G =  316  
+ABC: Path 51 --    9526 : 3    2 OAI21_X2  A =   1.86  Df =1938.0  -89.9 ps  S =  22.4 ps  Cin =  3.1 ff  Cout =   5.1 ff  Cmax =  52.1 ff  G =  155  
+ABC: Path 52 --    9527 : 3    2 AOI21_X2  A =   1.86  Df =1957.5  -71.8 ps  S =  25.1 ps  Cin =  3.1 ff  Cout =   5.0 ff  Cmax =  50.7 ff  G =  160  
+ABC: Path 53 --    9528 : 3    2 OAI21_X2  A =   1.86  Df =1994.5  -86.9 ps  S =  22.4 ps  Cin =  3.1 ff  Cout =   5.1 ff  Cmax =  52.1 ff  G =  155  
+ABC: Path 54 --    9529 : 3    2 AOI21_X2  A =   1.86  Df =2014.1  -70.0 ps  S =  25.1 ps  Cin =  3.1 ff  Cout =   5.0 ff  Cmax =  50.7 ff  G =  160  
+ABC: Path 55 --    9530 : 3    2 OAI21_X2  A =   1.86  Df =2046.5  -82.4 ps  S =  18.2 ps  Cin =  3.1 ff  Cout =   3.3 ff  Cmax =  52.1 ff  G =  101  
+ABC: Path 56 --    9531 : 3    2 AOI21_X1  A =   1.06  Df =2070.7  -58.0 ps  S =  36.9 ps  Cin =  1.6 ff  Cout =   5.0 ff  Cmax =  25.3 ff  G =  316  
+ABC: Path 57 --    9532 : 3    2 OAI21_X2  A =   1.86  Df =2108.6  -70.6 ps  S =  22.7 ps  Cin =  3.1 ff  Cout =   5.2 ff  Cmax =  52.1 ff  G =  161  
+ABC: Path 58 --    9533 : 3    2 AND3_X4   A =   2.93  Df =2149.9  -76.9 ps  S =   8.8 ps  Cin =  3.2 ff  Cout =   4.4 ff  Cmax = 241.1 ff  G =  133  
+ABC: Path 59 --    9534 : 3    2 NOR3_X2   A =   1.86  Df =2163.2  -25.4 ps  S =  41.9 ps  Cin =  3.2 ff  Cout =   7.4 ff  Cmax =  31.7 ff  G =  230  
+ABC: Path 60 --    9535 : 3    2 OAI21_X4  A =   3.46  Df =2192.6  -33.1 ps  S =  15.8 ps  Cin =  6.1 ff  Cout =   4.5 ff  Cmax = 104.1 ff  G =   67  
+ABC: Path 61 --    9536 : 3    2 AOI21_X2  A =   1.86  Df =2213.6  -10.6 ps  S =  30.9 ps  Cin =  3.1 ff  Cout =   7.4 ff  Cmax =  50.7 ff  G =  241  
+ABC: Path 62 --    9537 : 3    2 OAI21_X4  A =   3.46  Df =2243.9  -21.2 ps  S =  15.8 ps  Cin =  6.1 ff  Cout =   4.5 ff  Cmax = 104.1 ff  G =   67  
+ABC: Path 63 --    9538 : 3    2 AOI21_X2  A =   1.86  Df =2265.2   -0.4 ps  S =  30.9 ps  Cin =  3.1 ff  Cout =   7.4 ff  Cmax =  50.7 ff  G =  241  
+ABC: Path 64 --    9539 : 3    2 OAI21_X4  A =   3.46  Df =2292.8   -9.1 ps  S =  13.9 ps  Cin =  6.1 ff  Cout =   2.7 ff  Cmax = 104.1 ff  G =   40  
+ABC: Path 65 --    9540 : 3    2 AOI21_X1  A =   1.06  Df =2319.7   -9.3 ps  S =  25.4 ps  Cin =  1.6 ff  Cout =   2.5 ff  Cmax =  25.3 ff  G =  159  
+ABC: Path 66 --    9541 : 6    2 OAI33_X1  A =   1.86  Df =2422.5  -62.6 ps  S =  86.9 ps  Cin =  1.5 ff  Cout =   5.6 ff  Cmax =  11.5 ff  G =  357  
+ABC: Path 67 --    9542 : 3    2 OAI21_X2  A =   1.86  Df =2459.2  -47.9 ps  S =  31.5 ps  Cin =  3.1 ff  Cout =   8.9 ff  Cmax =  52.1 ff  G =  271  
+ABC: Path 68 --    9543 : 3    2 AOI21_X4  A =   3.46  Df =2501.3  -69.6 ps  S =  24.9 ps  Cin =  6.0 ff  Cout =   8.7 ff  Cmax = 101.0 ff  G =  143  
+ABC: Path 69 --    9544 : 3    2 OAI21_X4  A =   3.46  Df =2522.7  -54.7 ps  S =  20.9 ps  Cin =  6.1 ff  Cout =   8.9 ff  Cmax = 104.1 ff  G =  136  
+ABC: Path 70 --    9545 : 3    2 AOI21_X4  A =   3.46  Df =2558.2  -71.6 ps  S =  23.9 ps  Cin =  6.0 ff  Cout =   8.7 ff  Cmax = 101.0 ff  G =  143  
+ABC: Path 71 --    9546 : 3    2 OAI21_X4  A =   3.46  Df =2579.4  -56.5 ps  S =  20.9 ps  Cin =  6.1 ff  Cout =   8.9 ff  Cmax = 104.1 ff  G =  136  
+ABC: Path 72 --    9547 : 3    2 AOI21_X4  A =   3.46  Df =2610.1  -70.5 ps  S =  20.2 ps  Cin =  6.0 ff  Cout =   5.6 ff  Cmax = 101.0 ff  G =   91  
+ABC: Path 73 --    9548 : 3    2 OAI21_X2  A =   1.86  Df =2634.8  -49.4 ps  S =  31.2 ps  Cin =  3.1 ff  Cout =   8.9 ff  Cmax =  52.1 ff  G =  271  
+ABC: Path 74 --    9549 : 3    2 AOI21_X4  A =   3.46  Df =2666.3  -62.8 ps  S =  20.2 ps  Cin =  6.0 ff  Cout =   5.6 ff  Cmax = 101.0 ff  G =   91  
+ABC: Path 75 --    9550 : 3    2 OAI21_X2  A =   1.86  Df =2691.0  -41.5 ps  S =  31.2 ps  Cin =  3.1 ff  Cout =   8.9 ff  Cmax =  52.1 ff  G =  271  
+ABC: Path 76 --    9551 : 3    2 AOI21_X4  A =   3.46  Df =2726.5  -56.7 ps  S =  23.9 ps  Cin =  6.0 ff  Cout =   8.7 ff  Cmax = 101.0 ff  G =  143  
+ABC: Path 77 --    9552 : 3    2 OAI21_X4  A =   3.46  Df =2747.7  -41.6 ps  S =  20.9 ps  Cin =  6.1 ff  Cout =   8.9 ff  Cmax = 104.1 ff  G =  136  
+ABC: Path 78 --    9553 : 3    2 AOI21_X4  A =   3.46  Df =2778.4  -55.6 ps  S =  20.2 ps  Cin =  6.0 ff  Cout =   5.6 ff  Cmax = 101.0 ff  G =   90  
+ABC: Path 79 --    9554 : 3    2 OAI21_X2  A =   1.86  Df =2803.1  -32.8 ps  S =  31.2 ps  Cin =  3.1 ff  Cout =   8.9 ff  Cmax =  52.1 ff  G =  271  
+ABC: Path 80 --    9555 : 3    2 AOI21_X4  A =   3.46  Df =2834.6  -46.2 ps  S =  20.2 ps  Cin =  6.0 ff  Cout =   5.6 ff  Cmax = 101.0 ff  G =   90  
+ABC: Path 81 --    9556 : 3    2 OAI21_X2  A =   1.86  Df =2859.3  -25.0 ps  S =  31.2 ps  Cin =  3.1 ff  Cout =   8.9 ff  Cmax =  52.1 ff  G =  271  
+ABC: Path 82 --    9557 : 3    2 AOI21_X4  A =   3.46  Df =2894.8  -40.2 ps  S =  23.9 ps  Cin =  6.0 ff  Cout =   8.7 ff  Cmax = 101.0 ff  G =  143  
+ABC: Path 83 --    9558 : 3    2 OAI21_X4  A =   3.46  Df =2916.0  -25.1 ps  S =  20.9 ps  Cin =  6.1 ff  Cout =   8.9 ff  Cmax = 104.1 ff  G =  136  
+ABC: Path 84 --    9559 : 3    2 AOI21_X4  A =   3.46  Df =2946.7  -39.1 ps  S =  20.2 ps  Cin =  6.0 ff  Cout =   5.6 ff  Cmax = 101.0 ff  G =   90  
+ABC: Path 85 --    9560 : 3    3 OAI21_X2  A =   1.86  Df =2969.8  -18.8 ps  S =  27.6 ps  Cin =  3.1 ff  Cout =   7.4 ff  Cmax =  52.1 ff  G =  222  
+ABC: Path 86 --   10892 : 4    2 AOI211_X2 A =   2.39  Df =3021.8  -50.0 ps  S =  41.9 ps  Cin =  3.1 ff  Cout =   4.8 ff  Cmax =  29.0 ff  G =  146  
+ABC: Path 87 --   10893 : 3    2 OAI21_X2  A =   1.86  Df =3041.2  -41.0 ps  S =  18.3 ps  Cin =  3.1 ff  Cout =   3.4 ff  Cmax =  52.1 ff  G =  104  
+ABC: Path 88 --   10894 : 3    2 AND3_X2   A =   1.60  Df =3081.5  -31.2 ps  S =  14.5 ps  Cin =  1.6 ff  Cout =   7.4 ff  Cmax = 120.5 ff  G =  460  
+ABC: Path 89 --   10895 : 3    2 OAI21_X4  A =   3.46  Df =3110.8  -43.9 ps  S =  16.7 ps  Cin =  6.1 ff  Cout =   5.1 ff  Cmax = 104.1 ff  G =   78  
+ABC: Path 90 --   10896 : 3    2 AOI21_X2  A =   1.86  Df =3127.2  -27.0 ps  S =  21.0 ps  Cin =  3.1 ff  Cout =   3.2 ff  Cmax =  50.7 ff  G =  103  
+ABC: Path 91 --   10897 : 6    2 OAI33_X1  A =   1.86  Df =3225.0  -90.3 ps  S =  73.2 ps  Cin =  1.5 ff  Cout =   3.8 ff  Cmax =  11.5 ff  G =  242  
+ABC: Path 92 --   10898 : 3    2 OAI21_X1  A =   1.06  Df =3273.5  -65.7 ps  S =  52.0 ps  Cin =  1.6 ff  Cout =   8.9 ff  Cmax =  26.1 ff  G =  531  
+ABC: Path 93 --   10899 : 3    3 AOI21_X4  A =   3.46  Df =3319.1  -87.4 ps  S =  26.7 ps  Cin =  6.0 ff  Cout =  10.1 ff  Cmax = 101.0 ff  G =  167  
+ABC: Path 94 --   10900 : 4    2 OAI211_X4 A =   4.52  Df =3347.9  -77.1 ps  S =  23.2 ps  Cin =  6.2 ff  Cout =   8.4 ff  Cmax = 101.6 ff  G =  125  
+ABC: Path 95 --   10901 : 3    2 AOI21_X4  A =   3.46  Df =3379.8  -92.5 ps  S =  19.5 ps  Cin =  6.0 ff  Cout =   5.0 ff  Cmax = 101.0 ff  G =   81  
+ABC: Path 96 --   10902 : 3    2 OAI21_X2  A =   1.86  Df =3400.8  -76.6 ps  S =  22.7 ps  Cin =  3.1 ff  Cout =   5.2 ff  Cmax =  52.1 ff  G =  161  
+ABC: Path 97 --   10903 : 3    2 AND3_X4   A =   2.93  Df =3437.2  -68.9 ps  S =  10.5 ps  Cin =  3.2 ff  Cout =   7.4 ff  Cmax = 241.1 ff  G =  229  
+ABC: Path 98 --   10904 : 3    2 OAI21_X4  A =   3.46  Df =3465.7  -82.4 ps  S =  16.7 ps  Cin =  6.1 ff  Cout =   5.1 ff  Cmax = 104.1 ff  G =   78  
+ABC: Path 99 --   10905 : 3    2 AOI21_X2  A =   1.86  Df =3482.0  -65.4 ps  S =  21.0 ps  Cin =  3.1 ff  Cout =   3.2 ff  Cmax =  50.7 ff  G =  103  
+ABC: Path100 --   10906 : 6    2 OAI33_X1  A =   1.86  Df =3596.2 -141.8 ps  S =  88.1 ps  Cin =  1.5 ff  Cout =   5.7 ff  Cmax =  11.5 ff  G =  348  
+ABC: Path101 --   10907 : 3    2 AOI21_X2  A =   1.86  Df =3628.9 -123.9 ps  S =  34.1 ps  Cin =  3.1 ff  Cout =   8.7 ff  Cmax =  50.7 ff  G =  283  
+ABC: Path102 --   10908 : 3    2 OAI21_X4  A =   3.46  Df =3663.8 -137.4 ps  S =  17.7 ps  Cin =  6.1 ff  Cout =   5.7 ff  Cmax = 104.1 ff  G =   88  
+ABC: Path103 --   10909 : 3    2 AOI21_X2  A =   1.86  Df =3686.7 -113.9 ps  S =  33.9 ps  Cin =  3.1 ff  Cout =   8.7 ff  Cmax =  50.7 ff  G =  283  
+ABC: Path104 --   10910 : 3    3 OAI21_X4  A =   3.46  Df =3717.9 -124.0 ps  S =  17.1 ps  Cin =  6.1 ff  Cout =   5.6 ff  Cmax = 104.1 ff  G =   85  
+ABC: Path105 --   11104 : 4    2 AOI211_X1 A =   1.33  Df =3741.4  -75.7 ps  S =  59.2 ps  Cin =  1.6 ff  Cout =   4.8 ff  Cmax =  14.5 ff  G =  290  
+ABC: Path106 --   11105 : 4    2 OAI22_X2  A =   2.39  Df =3788.2  -92.3 ps  S =  34.4 ps  Cin =  3.1 ff  Cout =   5.1 ff  Cmax =  46.3 ff  G =  153  
+ABC: Path107 --   11106 : 3    2 AOI21_X2  A =   1.86  Df =3809.8  -75.1 ps  S =  25.2 ps  Cin =  3.1 ff  Cout =   5.0 ff  Cmax =  50.7 ff  G =  160  
+ABC: Path108 --   11107 : 3    2 OAI21_X2  A =   1.86  Df =3846.7  -89.9 ps  S =  22.4 ps  Cin =  3.1 ff  Cout =   5.1 ff  Cmax =  52.1 ff  G =  155  
+ABC: Path109 --   11108 : 3    2 AOI21_X2  A =   1.86  Df =3866.2  -71.7 ps  S =  25.1 ps  Cin =  3.1 ff  Cout =   5.0 ff  Cmax =  50.7 ff  G =  160  
+ABC: Path110 --   11109 : 3    2 OAI21_X2  A =   1.86  Df =3899.7  -85.2 ps  S =  18.2 ps  Cin =  3.1 ff  Cout =   3.3 ff  Cmax =  52.1 ff  G =  101  
+ABC: Path111 --   11110 : 3    2 AOI21_X1  A =   1.06  Df =3920.1  -64.8 ps  S =  28.7 ps  Cin =  1.6 ff  Cout =   3.2 ff  Cmax =  25.3 ff  G =  203  
+ABC: Path112 --   11111 : 6    2 OAI33_X1  A =   1.86  Df =4022.1 -129.6 ps  S =  76.7 ps  Cin =  1.5 ff  Cout =   4.3 ff  Cmax =  11.5 ff  G =  259  
+ABC: Path113 --   11161 : 3    2 AOI21_X1  A =   1.06  Df =4067.6 -103.9 ps  S =  54.4 ps  Cin =  1.6 ff  Cout =   8.7 ff  Cmax =  25.3 ff  G =  558  
+ABC: Path114 --   11162 : 3    3 OAI21_X4  A =   3.46  Df =4106.5 -117.7 ps  S =  20.0 ps  Cin =  6.1 ff  Cout =   7.4 ff  Cmax = 104.1 ff  G =  112  
+ABC: Path115 --   11163 : 4    2 AOI211_X2 A =   2.39  Df =4124.5  -88.0 ps  S =  36.4 ps  Cin =  3.1 ff  Cout =   3.2 ff  Cmax =  29.0 ff  G =  102  
+ABC: Path116 --   11164 : 3    2 OAI21_X1  A =   1.06  Df =4167.8 -103.3 ps  S =  27.1 ps  Cin =  1.6 ff  Cout =   3.6 ff  Cmax =  26.1 ff  G =  218  
+ABC: Path117 --   11165 : 3    1 MUX2_X1   A =   1.86  Df =4219.5 -100.3 ps  S =   8.0 ps  Cin =  1.2 ff  Cout =   0.0 ff  Cmax =  60.5 ff  G =    0  
+ABC: Start-point = pi63 (\a[0]).  End-point = po12 (\asquared[126]).
+ABC: + write_blif <abc-temp-dir>/output.blif 
+
+5.1.2. Re-integrating ABC results.
+ABC RESULTS:           AND2_X1 cells:      306
+ABC RESULTS:           AND2_X2 cells:        1
+ABC RESULTS:           AND2_X4 cells:        6
+ABC RESULTS:           AND3_X1 cells:       13
+ABC RESULTS:           AND3_X2 cells:        2
+ABC RESULTS:           AND3_X4 cells:        2
+ABC RESULTS:           AND4_X1 cells:       19
+ABC RESULTS:         AOI211_X1 cells:        9
+ABC RESULTS:         AOI211_X2 cells:        2
+ABC RESULTS:          AOI21_X1 cells:      877
+ABC RESULTS:          AOI21_X2 cells:       21
+ABC RESULTS:          AOI21_X4 cells:       14
+ABC RESULTS:          AOI22_X1 cells:      392
+ABC RESULTS:          AOI22_X2 cells:        2
+ABC RESULTS:            BUF_X1 cells:      615
+ABC RESULTS:           BUF_X16 cells:        2
+ABC RESULTS:            BUF_X2 cells:        3
+ABC RESULTS:            BUF_X4 cells:       14
+ABC RESULTS:            BUF_X8 cells:        7
+ABC RESULTS:         CLKBUF_X1 cells:       28
+ABC RESULTS:         CLKBUF_X3 cells:        2
+ABC RESULTS:            INV_X1 cells:      493
+ABC RESULTS:            INV_X2 cells:        3
+ABC RESULTS:           MUX2_X1 cells:        6
+ABC RESULTS:          NAND2_X1 cells:     2129
+ABC RESULTS:          NAND2_X2 cells:        9
+ABC RESULTS:          NAND2_X4 cells:        8
+ABC RESULTS:          NAND3_X1 cells:      181
+ABC RESULTS:          NAND4_X1 cells:       72
+ABC RESULTS:           NOR2_X1 cells:     1038
+ABC RESULTS:           NOR3_X1 cells:       27
+ABC RESULTS:           NOR3_X2 cells:        1
+ABC RESULTS:         OAI211_X1 cells:       69
+ABC RESULTS:         OAI211_X2 cells:        2
+ABC RESULTS:         OAI211_X4 cells:        2
+ABC RESULTS:          OAI21_X1 cells:      872
+ABC RESULTS:          OAI21_X2 cells:       24
+ABC RESULTS:          OAI21_X4 cells:       16
+ABC RESULTS:         OAI221_X1 cells:       89
+ABC RESULTS:         OAI221_X2 cells:        1
+ABC RESULTS:          OAI22_X1 cells:      449
+ABC RESULTS:          OAI22_X2 cells:        3
+ABC RESULTS:          OAI33_X1 cells:       12
+ABC RESULTS:            OR2_X1 cells:      214
+ABC RESULTS:            OR2_X2 cells:        3
+ABC RESULTS:            OR3_X1 cells:        7
+ABC RESULTS:          XNOR2_X1 cells:     1763
+ABC RESULTS:          XNOR2_X2 cells:        6
+ABC RESULTS:           XOR2_X1 cells:     1448
+ABC RESULTS:           XOR2_X2 cells:        4
+ABC RESULTS:        internal signals:    13242
+ABC RESULTS:           input signals:       64
+ABC RESULTS:          output signals:      126
+Removing temp directory.
+Removing global temp directory.
+
+6. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \top..
+Removed 0 unused cells and 13432 unused wires.
+<suppressed ~1 debug messages>
+7. Executing Verilog backend.
+
+7.1. Executing BMUXMAP pass.
+
+7.2. Executing DEMUXMAP pass.
+Dumping module `\top'.
+
+End of script. Logfile hash: 988c5b143d, time: 6.42s, user: 7.09s, system: 0.19s, MEM: 256.50 MB peak
+Yosys 0.66 (git sha1 86f2ddebc-dirty, g++ 16.1.1 -march=x86-64 -mtune=generic -O2 -fno-plt -fexceptions -fstack-clash-protection -fcf-protection -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -ffile-prefix-map=/build/yosys/src=/usr/src/debug/yosys -fPIC -O3) [startdir/yosys at makepkg]
+Time spent: 20% 14x opt_expr (1 sec), 18% 15x opt_clean (1 sec), ...

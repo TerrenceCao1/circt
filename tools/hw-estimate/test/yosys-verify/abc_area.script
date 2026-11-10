@@ -1,0 +1,9 @@
+strash
+dc2
+strash
+&get -n
+&dch -f
+&nf
+&put
+topo
+stime -p

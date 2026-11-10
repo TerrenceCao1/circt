@@ -1,0 +1,64 @@
+
+5. Executing ABC pass (technology mapping using ABC).
+
+5.1. Extracting gate netlist of module `\picorv32' to `<abc-temp-dir>/input.blif'..
+ABC: using cached merged SCL: /tmp/yosys-liberty-scl-cache/yosys_merged_6feb00bc.scl (1 files)
+Replacing 64 occurrences of constant undef bits with constant zero bits
+
+5.1.1. Executed ABC.
+Extracted 9292 gates and 10902 wires to a netlist network with 1607 inputs and 1625 outputs.
+Running ABC script: <abc-temp-dir>/abc.script
+ABC: ======== ABC command line "source <abc-temp-dir>/abc.script"
+ABC: + read_blif <abc-temp-dir>/input.blif 
+ABC: + read_scl /tmp/yosys-liberty-scl-cache/yosys_merged_6feb00bc.scl 
+ABC: Warning: Detected 2 multi-output cells (for example, "FA_X1").
+ABC: + read_constr -v /home/tzcao/dev/circt/tools/hw-estimate/test/out/abc.constr 
+ABC: Setting driving cell to be "BUF_X1".
+ABC: Setting output load to be 0.000000.
+ABC: + source /home/tzcao/dev/circt/tools/hw-estimate/test/yosys-verify/abc_area.script 
+ABC: WireLoad = "none"  Gates =   6531 (  6.1 %)   Cap =  3.5 ff (  0.7 %)   Area =     8365.70 ( 97.9 %)   Delay =  4445.50 ps  (  6.8 %)               
+ABC: Path  0 --    1384 : 0  313 pi        A =   0.00  Df =1256.0 -662.8 ps  S =1195.4 ps  Cin =  0.0 ff  Cout = 522.6 ff  Cmax =   0.0 ff  G =    0  
+ABC: Path  1 --    3794 : 1  234 INV_X1    A =   0.53  Df =3708.0-1440.4 ps  S =1189.6 ps  Cin =  1.6 ff  Cout = 385.7 ff  Cmax =  60.7 ff  G =22664  
+ABC: Path  2 --    8687 : 2    3 NOR2_X1   A =   0.80  Df =4100.6-1824.1 ps  S = 198.2 ps  Cin =  1.6 ff  Cout =   4.9 ff  Cmax =  26.7 ff  G =  297  
+ABC: Path  3 --    8711 : 5    1 AOI221_X1 A =   1.60  Df =4142.0-1782.0 ps  S = 195.4 ps  Cin =  1.6 ff  Cout =   1.6 ff  Cmax =  13.8 ff  G =  101  
+ABC: Path  4 --    8714 : 5    1 AOI221_X1 A =   1.60  Df =4267.3-1719.1 ps  S = 147.9 ps  Cin =  1.6 ff  Cout =   1.7 ff  Cmax =  13.8 ff  G =  100  
+ABC: Path  5 --    8725 : 4    1 AOI211_X1 A =   1.33  Df =4287.9-1630.3 ps  S =  77.5 ps  Cin =  1.6 ff  Cout =   1.7 ff  Cmax =  14.5 ff  G =  100  
+ABC: Path  6 --    8745 : 4    2 AOI211_X1 A =   1.33  Df =4389.6 -283.4 ps  S =  66.8 ps  Cin =  1.6 ff  Cout =   3.3 ff  Cmax =  14.5 ff  G =  201  
+ABC: Path  7 --    9579 : 3    1 OAI21_X1  A =   1.06  Df =4409.7 -257.5 ps  S =  25.9 ps  Cin =  1.6 ff  Cout =   1.6 ff  Cmax =  26.1 ff  G =   99  
+ABC: Path  8 --    9581 : 4    1 AOI22_X1  A =   1.33  Df =4445.5 -273.3 ps  S =  17.1 ps  Cin =  1.6 ff  Cout =   0.0 ff  Cmax =  24.6 ff  G =    0  
+ABC: Start-point = pi1383 ($\cpuregs$rdreg[1]$q [2]).  End-point = po1478 ($auto$rtlil.cc:3501:MuxGate$31895).
+ABC: + write_blif <abc-temp-dir>/output.blif 
+
+5.1.2. Re-integrating ABC results.
+ABC RESULTS:           AND2_X1 cells:      182
+ABC RESULTS:           AND3_X1 cells:       45
+ABC RESULTS:           AND4_X1 cells:       12
+ABC RESULTS:         AOI211_X1 cells:      216
+ABC RESULTS:          AOI21_X1 cells:      784
+ABC RESULTS:         AOI221_X1 cells:      134
+ABC RESULTS:         AOI222_X1 cells:       86
+ABC RESULTS:          AOI22_X1 cells:      217
+ABC RESULTS:            INV_X1 cells:      398
+ABC RESULTS:           MUX2_X1 cells:     1527
+ABC RESULTS:          NAND2_X1 cells:      555
+ABC RESULTS:          NAND3_X1 cells:       98
+ABC RESULTS:          NAND4_X1 cells:       20
+ABC RESULTS:           NOR2_X1 cells:      465
+ABC RESULTS:           NOR3_X1 cells:       77
+ABC RESULTS:           NOR4_X1 cells:       20
+ABC RESULTS:         OAI211_X1 cells:      212
+ABC RESULTS:          OAI21_X1 cells:      753
+ABC RESULTS:         OAI221_X1 cells:      180
+ABC RESULTS:         OAI222_X1 cells:       42
+ABC RESULTS:          OAI22_X1 cells:      153
+ABC RESULTS:          OAI33_X1 cells:        5
+ABC RESULTS:            OR2_X1 cells:       91
+ABC RESULTS:            OR3_X1 cells:       19
+ABC RESULTS:            OR4_X1 cells:        5
+ABC RESULTS:          XNOR2_X1 cells:      155
+ABC RESULTS:           XOR2_X1 cells:       80
+ABC RESULTS:        internal signals:     7670
+ABC RESULTS:           input signals:     1607
+ABC RESULTS:          output signals:     1625
+Removing temp directory.
+Removing global temp directory.
